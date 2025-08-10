@@ -10,6 +10,8 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Github, Mail } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import { login } from "@/services/api";
+import { useState } from "react";
 
 const schema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -19,9 +21,16 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function Login() {
+  const [token, setToken] = useState(null);
   const { register, handleSubmit, formState } = useForm<FormValues>({ resolver: zodResolver(schema) });
-  const onSubmit = (data: FormValues) => {
-    console.log("login", data);
+  const onSubmit = async (data: FormValues) => {
+    try {
+      const response = await login(data.email, data.password);
+      setToken(response.access_token);
+      console.log("Login successful:", response);
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
   };
 
   return (

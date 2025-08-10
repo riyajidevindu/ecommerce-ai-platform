@@ -10,6 +10,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Github, Mail } from "lucide-react";
 import { useMemo } from "react";
+import { register as registerUser } from "@/services/api";
 
 const schema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -33,8 +34,13 @@ export default function Signup() {
   const password = watch("password") || "";
   const strength = useMemo(() => getPasswordStrength(password), [password]);
 
-  const onSubmit = (data: FormValues) => {
-    console.log("signup", data);
+  const onSubmit = async (data: FormValues) => {
+    try {
+      const response = await registerUser(data.name, data.email, data.password);
+      console.log("Registration successful:", response);
+    } catch (error) {
+      console.error("Registration failed:", error);
+    }
   };
 
   return (
