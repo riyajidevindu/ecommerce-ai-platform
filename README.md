@@ -4,7 +4,7 @@ This project is a cloud-native microservices application for an AI-powered e-com
 
 ## Project Structure
 
-- `frontend/`: Contains the Next.js frontend application.
+- `frontend/`: Contains the React frontend application, built with Vite, TypeScript, shadcn-ui, and Tailwind CSS.
 - `services/`: Houses all the backend microservices, each with its own containerized environment.
 - `infrastructure/`: Includes Terraform configurations for cloud resources and a Docker Compose setup for local development.
 
@@ -40,3 +40,12 @@ This project is a cloud-native microservices application for an AI-powered e-com
     ```
 
 The frontend will be available at `http://localhost:3000`, and the backend services will be accessible at their respective ports as defined in `docker-compose.yaml`.
+
+## Frontend Development
+
+The frontend was generated using Lovable. You can edit the code in the following ways:
+
+*   **Use Lovable**: Visit the [Lovable Project](https://lovable.dev/projects/1dee1898-bc01-41b4-9477-f6e69e46792b) and start prompting.
+*   **Use your preferred IDE**: Clone this repo and push changes.
+*   **Edit a file directly in GitHub**
+*   **Use GitHub Codespaces**
