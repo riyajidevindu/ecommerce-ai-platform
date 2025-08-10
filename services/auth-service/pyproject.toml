@@ -6,12 +6,15 @@ authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-fastapi = "^0.104.1"
-uvicorn = {extras = ["standard"], version = "^0.24.0"}
-pytest = "^7.4.3"
+fastapi = "*"
+uvicorn = {extras = ["standard"], version = "*"}
+pytest = "*"
+sqlalchemy = "*"
+psycopg2-binary = "*"
+passlib = {extras = ["bcrypt"], version = "*"}
 
-[tool.poetry.dev-dependencies]
-pytest = "^7.4.3"
+[tool.poetry.group.dev.dependencies]
+pytest = "*"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
