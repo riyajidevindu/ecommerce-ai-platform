@@ -9,9 +9,9 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Github, Mail } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { login } from "@/services/api";
-import { useState } from "react";
+import { toast } from "sonner";
 
 const schema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -21,14 +21,20 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function Login() {
-  const [token, setToken] = useState(null);
+  const navigate = useNavigate();
   const { register, handleSubmit, formState } = useForm<FormValues>({ resolver: zodResolver(schema) });
   const onSubmit = async (data: FormValues) => {
     try {
       const response = await login(data.email, data.password);
-      setToken(response.access_token);
-      console.log("Login successful:", response);
+      localStorage.setItem("token", response.access_token);
+      toast.success("Login successful!");
+      navigate("/dashboard");
     } catch (error) {
+      if (error.response && error.response.data && error.response.data.detail) {
+        toast.error(error.response.data.detail);
+      } else {
+        toast.error("Login failed. Please try again.");
+      }
       console.error("Login failed:", error);
     }
   };

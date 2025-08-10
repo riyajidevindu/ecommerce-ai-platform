@@ -17,13 +17,18 @@ export const getHealth = async (service: string) => {
   }
 };
 
-export const login = async (username, password) => {
+interface LoginResponse {
+  access_token: string;
+  token_type: string;
+}
+
+export const login = async (username, password): Promise<LoginResponse> => {
   const params = new URLSearchParams();
   params.append('username', username);
   params.append('password', password);
 
   try {
-    const response = await apiClient.post('/api/v1/auth/login', params, {
+    const response = await apiClient.post<LoginResponse>('/api/v1/auth/login', params, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
@@ -35,9 +40,20 @@ export const login = async (username, password) => {
   }
 };
 
-export const register = async (username, email, password) => {
+interface RegisterResponse {
+  username: string;
+  email: string;
+  id: number;
+  is_active: boolean;
+}
+
+export const register = async (
+  username: string,
+  email: string,
+  password: string
+): Promise<RegisterResponse> => {
   try {
-    const response = await apiClient.post('/api/v1/auth/register', {
+    const response = await apiClient.post<RegisterResponse>('/api/v1/auth/register', {
       username,
       email,
       password,
