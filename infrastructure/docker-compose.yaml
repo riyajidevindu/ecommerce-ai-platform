@@ -3,7 +3,7 @@ version: '3.8'
 services:
   auth-service:
     build: ../services/auth-service
-    image: ${DOCKERHUB_USERNAME}/auth-service:latest
+    image: riyaji/auth-service:latest
     ports:
       - "8000:8000"
     volumes:
@@ -13,7 +13,7 @@ services:
 
   stock-service:
     build: ../services/stock-service
-    image: ${DOCKERHUB_USERNAME}/stock-service:latest
+    image: riyaji/stock-service:latest
     ports:
       - "8001:8001"
     volumes:
@@ -23,7 +23,7 @@ services:
 
   whatsapp-connector-service:
     build: ../services/whatsapp-connector-service
-    image: ${DOCKERHUB_USERNAME}/whatsapp-connector-service:latest
+    image: riyaji/whatsapp-connector-service:latest
     ports:
       - "8002:8002"
     volumes:
@@ -33,7 +33,7 @@ services:
 
   ai-orchestrator-service:
     build: ../services/ai-orchestrator-service
-    image: ${DOCKERHUB_USERNAME}/ai-orchestrator-service:latest
+    image: riyaji/ai-orchestrator-service:latest
     ports:
       - "8003:8003"
     volumes:
@@ -43,7 +43,7 @@ services:
 
   notification-service:
     build: ../services/notification-service
-    image: ${DOCKERHUB_USERNAME}/notification-service:latest
+    image: riyaji/notification-service:latest
     ports:
       - "8004:8004"
     volumes:
