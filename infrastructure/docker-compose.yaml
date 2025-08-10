@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  auth-service:
+    build: ../services/auth-service
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../services/auth-service/app:/app/app
+    environment:
+      - DATABASE_URL=postgresql://user:password@postgres:5432/auth_db
+
+  stock-service:
+    build: ../services/stock-service
+    ports:
+      - "8001:8001"
+    volumes:
+      - ../services/stock-service/app:/app/app
+    environment:
+      - DATABASE_URL=postgresql://user:password@postgres:5432/stock_db
+
+  whatsapp-connector-service:
+    build: ../services/whatsapp-connector-service
+    ports:
+      - "8002:8002"
+    volumes:
+      - ../services/whatsapp-connector-service/app:/app/app
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+
+  ai-orchestrator-service:
+    build: ../services/ai-orchestrator-service
+    ports:
+      - "8003:8003"
+    volumes:
+      - ../services/ai-orchestrator-service/app:/app/app
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+
+  notification-service:
+    build: ../services/notification-service
+    ports:
+      - "8004:8004"
+    volumes:
+      - ../services/notification-service/app:/app/app
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+
+  postgres:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=auth_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+volumes:
+  postgres_data:
