@@ -38,22 +38,22 @@ export default function Login() {
       const response = await login(data.email, data.password);
       localStorage.setItem("token", response.access_token);
       notifications.show({
-        title: "Login Successful",
-        message: "Welcome back!",
+        title: <Text size="lg">Login Successful</Text>,
+        message: <Text size="md">Welcome back!</Text>,
         color: "green",
       });
       navigate("/dashboard");
     } catch (error) {
       if (error.response && error.response.data && error.response.data.detail) {
         notifications.show({
-          title: "Login Failed",
-          message: error.response.data.detail,
+          title: <Text size="lg">Login Failed</Text>,
+          message: <Text size="md">{error.response.data.detail}</Text>,
           color: "red",
         });
       } else {
         notifications.show({
-          title: "Login Failed",
-          message: "Please try again.",
+          title: <Text size="lg">Login Failed</Text>,
+          message: <Text size="md">Please try again.</Text>,
           color: "red",
         });
       }
@@ -113,6 +113,8 @@ export default function Login() {
               label="Email"
               placeholder="you@example.com"
               required
+              size="lg"
+              radius="md"
               {...register("email")}
               error={formState.errors.email?.message}
             />
@@ -120,16 +122,18 @@ export default function Login() {
               label="Password"
               placeholder="Your password"
               required
+              size="lg"
+              radius="md"
               mt="md"
               {...register("password")}
               error={formState.errors.password?.message}
             />
             <Group justify="space-between" mt="lg">
-              <Anchor component="button" size="sm">
+              <Anchor component={NavLink} to="/forgot-password" size="sm">
                 Forgot password?
               </Anchor>
             </Group>
-            <Button fullWidth mt="xl" type="submit">
+            <Button fullWidth mt="xl" type="submit" size="lg" radius="md">
               Sign in
             </Button>
           </form>

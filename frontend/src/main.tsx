@@ -8,7 +8,7 @@ import "@mantine/notifications/styles.css";
 
 createRoot(document.getElementById("root")!).render(
   <MantineProvider>
-    <Notifications />
+    <Notifications position="top-right" />
     <App />
   </MantineProvider>
 );

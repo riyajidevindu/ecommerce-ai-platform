@@ -38,22 +38,24 @@ export default function Signup() {
     try {
       await registerUser(data.name, data.email, data.password);
       notifications.show({
-        title: "Registration Successful",
-        message: "You can now log in with your new account.",
+        title: <Text size="lg">Registration Successful</Text>,
+        message: (
+          <Text size="md">You can now log in with your new account.</Text>
+        ),
         color: "green",
       });
       navigate("/login");
     } catch (error) {
       if (error.response && error.response.data && error.response.data.detail) {
         notifications.show({
-          title: "Registration Failed",
-          message: error.response.data.detail,
+          title: <Text size="lg">Registration Failed</Text>,
+          message: <Text size="md">{error.response.data.detail}</Text>,
           color: "red",
         });
       } else {
         notifications.show({
-          title: "Registration Failed",
-          message: "Please try again.",
+          title: <Text size="lg">Registration Failed</Text>,
+          message: <Text size="md">Please try again.</Text>,
           color: "red",
         });
       }
@@ -113,6 +115,8 @@ export default function Signup() {
               label="Name"
               placeholder="Your name"
               required
+              size="lg"
+              radius="md"
               {...register("name")}
               error={formState.errors.name?.message}
             />
@@ -120,6 +124,8 @@ export default function Signup() {
               label="Email"
               placeholder="you@example.com"
               required
+              size="lg"
+              radius="md"
               mt="md"
               {...register("email")}
               error={formState.errors.email?.message}
@@ -128,11 +134,13 @@ export default function Signup() {
               label="Password"
               placeholder="Your password"
               required
+              size="lg"
+              radius="md"
               mt="md"
               {...register("password")}
               error={formState.errors.password?.message}
             />
-            <Button fullWidth mt="xl" type="submit">
+            <Button fullWidth mt="xl" type="submit" size="lg" radius="md">
               Create account
             </Button>
           </form>
