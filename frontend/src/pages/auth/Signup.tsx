@@ -1,18 +1,24 @@
 import { Helmet } from "react-helmet-async";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Github, Mail } from "lucide-react";
-import { useMemo } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import { register as registerUser } from "@/services/api";
-import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import {
+  TextInput,
+  PasswordInput,
+  Button,
+  Paper,
+  Title,
+  Text,
+  Container,
+  Group,
+  Anchor,
+  Box,
+  rem,
+} from "@mantine/core";
+import { Chrome, Facebook } from "lucide-react";
 
 const schema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -22,20 +28,11 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-function getPasswordStrength(pw: string) {
-  let score = 0;
-  if (pw.length >= 8) score++;
-  if (/[A-Z]/.test(pw)) score++;
-  if (/[0-9]/.test(pw)) score++;
-  if (/[^A-Za-z0-9]/.test(pw)) score++;
-  return score; // 0-4
-}
-
 export default function Signup() {
   const navigate = useNavigate();
-  const { register, handleSubmit, watch, formState } = useForm<FormValues>({ resolver: zodResolver(schema) });
-  const password = watch("password") || "";
-  const strength = useMemo(() => getPasswordStrength(password), [password]);
+  const { register, handleSubmit, formState } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+  });
 
   const onSubmit = async (data: FormValues) => {
     try {
@@ -53,61 +50,105 @@ export default function Signup() {
   };
 
   return (
-    <div className="max-w-md mx-auto">
+    <Box
+      style={{
+        minHeight: "100vh",
+        backgroundSize: "cover",
+        backgroundImage:
+          "url(https://images.unsplash.com/photo-1484242857719-4b9144542727?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1280&q=80)",
+        paddingTop: rem(80),
+        paddingBottom: rem(80),
+      }}
+    >
       <Helmet>
         <title>Sign up – AI Seller Assistant</title>
-        <meta name="description" content="Create your account to start automating customer chats and sales." />
+        <meta
+          name="description"
+          content="Create your account to start automating customer chats and sales."
+        />
         <link rel="canonical" href="/signup" />
       </Helmet>
+      <Container size={420}>
+        <Title
+          ta="center"
+          style={(theme) => ({
+            fontFamily: `Greycliff CF, ${theme.fontFamily}`,
+            color: theme.white,
+          })}
+        >
+          Create an account
+        </Title>
+        <Text color="dimmed" size="sm" ta="center" mt={5}>
+          Already have an account?{" "}
+          <Anchor size="sm" component={NavLink} to="/login">
+            Sign in
+          </Anchor>
+        </Text>
 
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Create account</CardTitle>
-            <CardDescription>Start your journey with AI-powered assistance</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input id="name" placeholder="Your name" {...register("name")} />
-                {formState.errors.name && (
-                  <p className="text-destructive text-sm">{formState.errors.name.message}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="you@example.com" {...register("email")} />
-                {formState.errors.email && (
-                  <p className="text-destructive text-sm">{formState.errors.email.message}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" placeholder="••••••••" {...register("password")} />
-                <div className="h-2 bg-muted rounded">
-                  <div
-                    className={`h-2 rounded transition-all`} 
-                    style={{ width: `${(strength / 4) * 100}%`, backgroundColor: "hsl(var(--primary))" }}
-                    aria-label="password strength"
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">Use 8+ chars, with a number, uppercase, and symbol.</p>
-                {formState.errors.password && (
-                  <p className="text-destructive text-sm">{formState.errors.password.message}</p>
-                )}
-              </div>
-              <Button type="submit" className="w-full">Create account</Button>
-            </form>
+        <Paper
+          withBorder
+          shadow="md"
+          p={30}
+          mt={30}
+          radius="md"
+          style={{
+            backgroundColor: "rgba(255, 255, 255, 0.15)",
+            backdropFilter: "blur(10px)",
+          }}
+        >
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <TextInput
+              label="Name"
+              placeholder="Your name"
+              required
+              {...register("name")}
+              error={formState.errors.name?.message}
+            />
+            <TextInput
+              label="Email"
+              placeholder="you@example.com"
+              required
+              mt="md"
+              {...register("email")}
+              error={formState.errors.email?.message}
+            />
+            <PasswordInput
+              label="Password"
+              placeholder="Your password"
+              required
+              mt="md"
+              {...register("password")}
+              error={formState.errors.password?.message}
+            />
+            <Button fullWidth mt="xl" type="submit">
+              Create account
+            </Button>
+          </form>
 
-            <Separator />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <Button variant="secondary"><Mail className="h-4 w-4 mr-2" /> Google</Button>
-              <Button variant="secondary"><Github className="h-4 w-4 mr-2" /> Facebook</Button>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-    </div>
+          <Text color="dimmed" size="sm" ta="center" mt="lg">
+            or continue with
+          </Text>
+
+          <Group grow mb="md" mt="md">
+            <Button
+              radius="xl"
+              leftSection={<Chrome />}
+              variant="default"
+              color="gray"
+            >
+              Google
+            </Button>
+            <Button
+              radius="xl"
+              leftSection={<Facebook />}
+              variant="default"
+              color="gray"
+            >
+              Facebook
+            </Button>
+          </Group>
+        </Paper>
+      </Container>
+    </Box>
   );
 }
