@@ -4,7 +4,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { NavLink, useNavigate } from "react-router-dom";
 import { login } from "@/services/api";
-import { toast } from "sonner";
+import { notifications } from "@mantine/notifications";
 import {
   TextInput,
   PasswordInput,
@@ -37,13 +37,25 @@ export default function Login() {
     try {
       const response = await login(data.email, data.password);
       localStorage.setItem("token", response.access_token);
-      toast.success("Login successful!");
+      notifications.show({
+        title: "Login Successful",
+        message: "Welcome back!",
+        color: "green",
+      });
       navigate("/dashboard");
     } catch (error) {
       if (error.response && error.response.data && error.response.data.detail) {
-        toast.error(error.response.data.detail);
+        notifications.show({
+          title: "Login Failed",
+          message: error.response.data.detail,
+          color: "red",
+        });
       } else {
-        toast.error("Login failed. Please try again.");
+        notifications.show({
+          title: "Login Failed",
+          message: "Please try again.",
+          color: "red",
+        });
       }
       console.error("Login failed:", error);
     }

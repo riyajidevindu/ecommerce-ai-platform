@@ -4,7 +4,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { NavLink, useNavigate } from "react-router-dom";
 import { register as registerUser } from "@/services/api";
-import { toast } from "sonner";
+import { notifications } from "@mantine/notifications";
 import {
   TextInput,
   PasswordInput,
@@ -37,13 +37,25 @@ export default function Signup() {
   const onSubmit = async (data: FormValues) => {
     try {
       await registerUser(data.name, data.email, data.password);
-      toast.success("Registration successful!");
+      notifications.show({
+        title: "Registration Successful",
+        message: "You can now log in with your new account.",
+        color: "green",
+      });
       navigate("/login");
     } catch (error) {
       if (error.response && error.response.data && error.response.data.detail) {
-        toast.error(error.response.data.detail);
+        notifications.show({
+          title: "Registration Failed",
+          message: error.response.data.detail,
+          color: "red",
+        });
       } else {
-        toast.error("Registration failed. Please try again.");
+        notifications.show({
+          title: "Registration Failed",
+          message: "Please try again.",
+          color: "red",
+        });
       }
       console.error("Registration failed:", error);
     }
