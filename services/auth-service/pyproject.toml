@@ -12,6 +12,8 @@ pytest = "*"
 sqlalchemy = "*"
 psycopg2-binary = "*"
 passlib = {extras = ["bcrypt"], version = "*"}
+python-jose = {extras = ["cryptography"], version = "*"}
+python-multipart = "*"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
