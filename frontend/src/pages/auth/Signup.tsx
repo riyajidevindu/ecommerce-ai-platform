@@ -11,6 +11,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Github, Mail } from "lucide-react";
 import { useMemo } from "react";
 import { register as registerUser } from "@/services/api";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const schema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -30,15 +32,22 @@ function getPasswordStrength(pw: string) {
 }
 
 export default function Signup() {
+  const navigate = useNavigate();
   const { register, handleSubmit, watch, formState } = useForm<FormValues>({ resolver: zodResolver(schema) });
   const password = watch("password") || "";
   const strength = useMemo(() => getPasswordStrength(password), [password]);
 
   const onSubmit = async (data: FormValues) => {
     try {
-      const response = await registerUser(data.name, data.email, data.password);
-      console.log("Registration successful:", response);
+      await registerUser(data.name, data.email, data.password);
+      toast.success("Registration successful!");
+      navigate("/login");
     } catch (error) {
+      if (error.response && error.response.data && error.response.data.detail) {
+        toast.error(error.response.data.detail);
+      } else {
+        toast.error("Registration failed. Please try again.");
+      }
       console.error("Registration failed:", error);
     }
   };
