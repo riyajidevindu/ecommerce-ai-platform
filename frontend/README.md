@@ -1,31 +1,34 @@
-# Frontend Application
+# Next.js Frontend
 
-This is the frontend for the E-commerce AI Platform, built with React.js and Material UI.
+This is the frontend for the E-commerce AI Platform, built with Next.js, React, and Material UI.
 
-## Available Scripts
+## Getting Started
 
-In the project directory, you can run:
+First, install the dependencies:
 
-### `npm install`
+```bash
+npm install
+```
 
-Installs all the necessary dependencies for the project.
+Then, run the development server:
 
-### `npm start`
+```bash
+npm run dev
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Building for Production
 
-### `npm test`
+To build the application for production, run:
 
-Launches the test runner in the interactive watch mode.
+```bash
+npm run build
+```
 
-### `npm run build`
+This will create an optimized production build in the `.next` directory.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+To run the production build, use:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+npm run start

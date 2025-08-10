@@ -30,6 +30,10 @@ build/
 dist/
 .DS_Store
 
+# Next.js
+.next/
+out/
+
 # Docker
 .dockerignore
 docker-compose.override.yml

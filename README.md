@@ -4,7 +4,7 @@ This project is a cloud-native microservices application for an AI-powered e-com
 
 ## Project Structure
 
-- `frontend/`: Contains the React.js single-page application.
+- `frontend/`: Contains the Next.js frontend application.
 - `services/`: Houses all the backend microservices, each with its own containerized environment.
 - `infrastructure/`: Includes Terraform configurations for cloud resources and a Docker Compose setup for local development.
 
@@ -36,7 +36,7 @@ This project is a cloud-native microservices application for an AI-powered e-com
     ```bash
     cd frontend
     npm install
-    npm start
+    npm run dev
     ```
 
 The frontend will be available at `http://localhost:3000`, and the backend services will be accessible at their respective ports as defined in `docker-compose.yaml`.
