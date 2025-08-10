@@ -25,7 +25,14 @@ This project is a cloud-native microservices application for an AI-powered e-com
     cd ecommerce-ai-platform
     ```
 
-2.  **Run backend services:**
+2.  **Set up environment variables:**
+    Create a `.env` file in the root of the project by copying the `.env.example` file:
+    ```bash
+    cp .env.example .env
+    ```
+    Update the `.env` file with your own secret keys and database credentials.
+
+3.  **Run backend services:**
     All backend services can be started using Docker Compose.
     ```bash
     docker-compose up -d
