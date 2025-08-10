@@ -19,6 +19,12 @@ This project is a cloud-native microservices application for an AI-powered e-com
 
 ### Local Development
 
+There are two ways to set up the project for local development:
+
+**Option 1: Running from Docker Hub (Recommended)**
+
+This is the easiest way to get started, as it uses the pre-built Docker images from Docker Hub.
+
 1.  **Clone the repository:**
     ```bash
     git clone <repository-url>
@@ -32,27 +38,47 @@ This project is a cloud-native microservices application for an AI-powered e-com
     ```
     Update the `.env` file with your own secret keys and database credentials.
 
-3.  **Run backend services:**
-    All backend services can be started using Docker Compose.
+3.  **Run the services:**
     ```bash
+    cd infrastructure
     docker-compose up -d
     ```
+    This will pull the images from Docker Hub and start all the services.
 
-3.  **Run the frontend:**
-    Navigate to the `frontend` directory and install dependencies, then start the development server.
+**Option 2: Building from Source**
+
+Use this option if you want to build the Docker images from the source code.
+
+1.  **Clone the repository:**
     ```bash
-    cd frontend
-    npm install
-    npm run dev
+    git clone <repository-url>
+    cd ecommerce-ai-platform
     ```
+
+2.  **Set up environment variables:**
+    Create a `.env` file in the root of the project by copying the `.env.example` file:
+    ```bash
+    cp .env.example .env
+    ```
+    Update the `.env` file with your own secret keys and database credentials.
+
+3.  **Build and run the services:**
+    ```bash
+    cd infrastructure
+    docker-compose up -d --build
+    ```
+    This will build the Docker images for all the services and then start them.
+
+### Frontend Development
+
+Navigate to the `frontend` directory and install dependencies, then start the development server.
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
 The frontend will be available at `http://localhost:3000`, and the backend services will be accessible at their respective ports as defined in `docker-compose.yaml`.
 
-## Frontend Development
 
-The frontend was generated using Lovable. You can edit the code in the following ways:
-
-*   **Use Lovable**: Visit the [Lovable Project](https://lovable.dev/projects/1dee1898-bc01-41b4-9477-f6e69e46792b) and start prompting.
-*   **Use your preferred IDE**: Clone this repo and push changes.
-*   **Edit a file directly in GitHub**
-*   **Use GitHub Codespaces**
