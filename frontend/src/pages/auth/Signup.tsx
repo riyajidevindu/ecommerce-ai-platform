@@ -155,6 +155,8 @@ export default function Signup() {
               leftSection={<Chrome />}
               variant="default"
               color="gray"
+              component="a"
+              href="http://localhost:8000/api/v1/auth/google/login"
             >
               Google
             </Button>

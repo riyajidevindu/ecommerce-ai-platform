@@ -7,6 +7,7 @@ from app.crud import user as user_crud
 from app.crud import session as session_crud
 from app.db.session import get_db
 from app.core.security import verify_password
+from app.core.oauth import oauth
 
 router = APIRouter()
 
@@ -42,3 +43,26 @@ def logout(response: Response, request: Request, db: Session = Depends(get_db)):
         session_crud.delete_session(db, session_id=session_id)
     response.delete_cookie(key="session_id")
     return {"message": "Logout successful"}
+
+@router.get("/google/login")
+async def google_login(request: Request):
+    redirect_uri = request.url_for('google_callback')
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+from fastapi.responses import RedirectResponse
+import os
+
+@router.get("/google/callback")
+async def google_callback(request: Request, db: Session = Depends(get_db)):
+    token = await oauth.google.authorize_access_token(request)
+    user_info = await oauth.google.userinfo(token=token)
+    
+    user = user_crud.get_user_by_username_or_email(db, email=user_info['email'])
+    if not user:
+        # Create a new user with a placeholder for the password
+        user = user_crud.create_user(db, user=UserCreate(username=user_info['name'], email=user_info['email'], password="google-oauth-placeholder"))
+
+    session = session_crud.create_session(db, session=SessionCreate(user_id=user.id, user_agent=request.headers.get("user-agent")))
+    response = RedirectResponse(url=f"{os.getenv('FRONTEND_URL')}/dashboard")
+    response.set_cookie(key="session_id", value=session.id, httponly=True)
+    return response
