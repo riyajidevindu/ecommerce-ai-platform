@@ -33,7 +33,9 @@ interface Product {
   id: number;
   name: string;
   price: number;
-  quantity: number;
+  stock_qty: number;
+  available_qty: number;
+  description: string;
   image: string;
   sku: string;
 }
@@ -42,23 +44,48 @@ export default function Stock() {
   const [products, setProducts] = useState<Product[]>([]);
   const [open, setOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   useEffect(() => {
     fetch("http://localhost:8001/api/v1/products/")
-      .then((response) => response.json())
-      .then((data) => setProducts(data));
+      .then((response) => {
+        if (!response.ok) throw new Error(`Products fetch failed: ${response.status}`);
+        return response.json();
+      })
+      .then((data) => setProducts(data))
+      .catch((err) => console.error("Products load error", err));
   }, []);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const newProduct = {
+    let imageUrl = selectedProduct?.image || "";
+
+    if (imageFile) {
+      const imageFormData = new FormData();
+      imageFormData.append("file", imageFile);
+
+      const response = await fetch("http://localhost:8005/upload", {
+        method: "POST",
+        body: imageFormData,
+      });
+      if (!response.ok) throw new Error(`Upload failed: ${response.status}`);
+      const data = await response.json();
+      imageUrl = `http://localhost:8005${data.url}`;
+    }
+
+    const newProduct: Partial<Product> = {
       sku: formData.get("sku") as string,
       name: formData.get("name") as string,
       price: parseFloat(formData.get("price") as string),
-      quantity: parseInt(formData.get("quantity") as string),
-      image: formData.get("image") as string,
+      stock_qty: parseInt(formData.get("stock_qty") as string),
+      description: formData.get("description") as string,
+      image: imageUrl,
     };
+
+    if (selectedProduct) {
+      newProduct.available_qty = parseInt(formData.get("available_qty") as string);
+    }
 
     const url = selectedProduct
       ? `http://localhost:8001/api/v1/products/${selectedProduct.id}`
@@ -83,6 +110,7 @@ export default function Stock() {
         }
         setOpen(false);
         setSelectedProduct(null);
+        setImageFile(null);
       });
   };
 
@@ -130,29 +158,29 @@ export default function Stock() {
                 <form onSubmit={handleSubmit}>
                   <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="sku" className="text-right">
+                      <Label htmlFor="sku" className="text-right text-white">
                         SKU
                       </Label>
                       <Input
                         id="sku"
                         name="sku"
                         defaultValue={selectedProduct?.sku}
-                        className="col-span-3 bg-background"
+                        className="col-span-3"
                       />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="name" className="text-right">
+                      <Label htmlFor="name" className="text-right text-white">
                         Name
                       </Label>
                       <Input
                         id="name"
                         name="name"
                         defaultValue={selectedProduct?.name}
-                        className="col-span-3 bg-background"
+                        className="col-span-3"
                       />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="price" className="text-right">
+                      <Label htmlFor="price" className="text-right text-white">
                         Price
                       </Label>
                       <Input
@@ -160,35 +188,64 @@ export default function Stock() {
                         name="price"
                         type="number"
                         defaultValue={selectedProduct?.price}
-                        className="col-span-3 bg-background"
+                        className="col-span-3"
                       />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="quantity" className="text-right">
-                        Quantity
+                      <Label htmlFor="stock_qty" className="text-right text-white">
+                        Stock Quantity
                       </Label>
                       <Input
-                        id="quantity"
-                        name="quantity"
+                        id="stock_qty"
+                        name="stock_qty"
                         type="number"
-                        defaultValue={selectedProduct?.quantity}
-                        className="col-span-3 bg-background"
+                        defaultValue={selectedProduct?.stock_qty}
+                        className="col-span-3"
+                      />
+                    </div>
+                    {selectedProduct && (
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="available_qty" className="text-right text-white">
+                          Available Quantity
+                        </Label>
+                        <Input
+                          id="available_qty"
+                          name="available_qty"
+                          type="number"
+                          defaultValue={selectedProduct?.available_qty}
+                          className="col-span-3"
+                        />
+                      </div>
+                    )}
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="description" className="text-right text-white">
+                        Description
+                      </Label>
+                      <Input
+                        id="description"
+                        name="description"
+                        defaultValue={selectedProduct?.description}
+                        className="col-span-3"
                       />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="image" className="text-right">
-                        Image URL
+                      <Label htmlFor="image" className="text-right text-white">
+                        Image
                       </Label>
                       <Input
                         id="image"
                         name="image"
-                        defaultValue={selectedProduct?.image}
-                        className="col-span-3 bg-background"
+                        type="file"
+                        onChange={(e) =>
+                          setImageFile(e.target.files ? e.target.files[0] : null)
+                        }
+                        className="col-span-3"
                       />
                     </div>
                   </div>
                   <DialogFooter>
                     <Button type="submit">Save</Button>
+                    <Button type="button" onClick={() => { setOpen(false); setSelectedProduct(null); setImageFile(null); }}>Close</Button>
                   </DialogFooter>
                 </form>
               </DialogContent>
@@ -202,7 +259,9 @@ export default function Stock() {
                 <TableHead>SKU</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Price</TableHead>
-                <TableHead>Quantity</TableHead>
+                <TableHead>Stock Qty</TableHead>
+                <TableHead>Available Qty</TableHead>
+                <TableHead>Description</TableHead>
                 <TableHead>Image</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -213,9 +272,15 @@ export default function Stock() {
                   <TableCell>{product.sku}</TableCell>
                   <TableCell>{product.name}</TableCell>
                   <TableCell>{product.price}</TableCell>
-                  <TableCell>{product.quantity}</TableCell>
+                  <TableCell>{product.stock_qty}</TableCell>
+                  <TableCell>{product.available_qty}</TableCell>
+                  <TableCell>{product.description}</TableCell>
                   <TableCell>
-                    <img src={product.image} alt={product.name} width="50" />
+                    <img
+                      src={product.image.startsWith("http") ? product.image : `http://localhost:8005${product.image}`}
+                      alt={product.name}
+                      width="50"
+                    />
                   </TableCell>
                   <TableCell>
                     <Button
