@@ -5,6 +5,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 });
 
 export const getHealth = async (service: string) => {
@@ -61,6 +62,33 @@ export const register = async (
     return response.data;
   } catch (error) {
     console.error('Error registering:', error);
+    throw error;
+  }
+};
+
+interface UserResponse {
+  username: string;
+  email: string;
+  id: number;
+  is_active: boolean;
+}
+
+export const getCurrentUser = async (): Promise<UserResponse> => {
+  try {
+    const response = await apiClient.get<UserResponse>('/api/v1/users/me');
+    return response.data;
+  } catch (error) {
+    console.error('Error getting current user:', error);
+    throw error;
+  }
+};
+
+export const logout = async () => {
+  try {
+    const response = await apiClient.post('/api/v1/auth/logout');
+    return response.data;
+  } catch (error) {
+    console.error('Error logging out:', error);
     throw error;
   }
 };

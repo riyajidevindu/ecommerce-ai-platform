@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { NavLink, useNavigate } from "react-router-dom";
 import { login } from "@/services/api";
 import { notifications } from "@mantine/notifications";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   TextInput,
   PasswordInput,
@@ -29,14 +30,15 @@ type FormValues = z.infer<typeof schema>;
 
 export default function Login() {
   const navigate = useNavigate();
+  const { checkUser } = useAuth();
   const { register, handleSubmit, formState } = useForm<FormValues>({
     resolver: zodResolver(schema),
   });
 
   const onSubmit = async (data: FormValues) => {
     try {
-      const response = await login(data.email, data.password);
-      localStorage.setItem("token", response.access_token);
+      await login(data.email, data.password);
+      await checkUser();
       notifications.show({
         title: <Text size="lg">Login Successful</Text>,
         message: <Text size="md">Welcome back!</Text>,
@@ -148,6 +150,8 @@ export default function Login() {
               leftSection={<Chrome />}
               variant="default"
               color="gray"
+              component="a"
+              href="http://localhost:8000/api/v1/auth/google/login"
             >
               Google
             </Button>
