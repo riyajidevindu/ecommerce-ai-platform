@@ -19,7 +19,7 @@ services:
     volumes:
       - ../services/stock-service/app:/app/app
     environment:
-      - DATABASE_URL=postgresql://user:password@postgres:5432/stock_db
+      - DATABASE_URL=postgresql://user:password@postgres-stock:5432/stock_db
 
   whatsapp-connector-service:
     build: ../services/whatsapp-connector-service
@@ -60,6 +60,17 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  postgres-stock:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: stock_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_stock_data:/var/lib/postgresql/data
+
   rabbitmq:
     image: rabbitmq:3-management
     ports:
@@ -68,3 +79,4 @@ services:
 
 volumes:
   postgres_data:
+  postgres_stock_data:
