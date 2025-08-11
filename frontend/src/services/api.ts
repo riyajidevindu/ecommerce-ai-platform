@@ -82,3 +82,13 @@ export const getCurrentUser = async (): Promise<UserResponse> => {
     throw error;
   }
 };
+
+export const logout = async () => {
+  try {
+    const response = await apiClient.post('/api/v1/auth/logout');
+    return response.data;
+  } catch (error) {
+    console.error('Error logging out:', error);
+    throw error;
+  }
+};

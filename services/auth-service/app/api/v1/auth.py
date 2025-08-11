@@ -33,3 +33,8 @@ def login_for_access_token(response: Response, form_data: OAuth2PasswordRequestF
     access_token = create_access_token(data={"sub": user.email})
     response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True)
     return {"message": "Login successful"}
+
+@router.post("/logout")
+def logout(response: Response):
+    response.delete_cookie(key="access_token")
+    return {"message": "Logout successful"}
