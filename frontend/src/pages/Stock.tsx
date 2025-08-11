@@ -18,6 +18,7 @@ const Stock = () => {
     description: "",
     price: "",
     stock_qty: "",
+    available_qty: "",
     image: "",
     sku: "",
   });
@@ -61,12 +62,22 @@ const Stock = () => {
       }
     }
 
-    const productData = {
-      ...formData,
-      price: parseFloat(formData.price),
-      stock_qty: parseInt(formData.stock_qty, 10),
-      image: imageUrl,
-    };
+    const productData = selectedProduct
+      ? {
+          ...formData,
+          price: parseFloat(formData.price),
+          stock_qty: parseInt(formData.stock_qty, 10),
+          available_qty: parseInt(formData.available_qty, 10),
+          image: imageUrl,
+        }
+      : {
+          name: formData.name,
+          description: formData.description,
+          price: parseFloat(formData.price),
+          stock_qty: parseInt(formData.stock_qty, 10),
+          image: imageUrl,
+          sku: formData.sku,
+        };
 
     try {
       if (selectedProduct) {
@@ -88,6 +99,7 @@ const Stock = () => {
       description: product.description,
       price: product.price.toString(),
       stock_qty: product.stock_qty.toString(),
+      available_qty: product.available_qty.toString(),
       image: product.image,
       sku: product.sku,
     });
@@ -108,7 +120,15 @@ const Stock = () => {
 
   const openModal = () => {
     setSelectedProduct(null);
-    setFormData({ name: "", description: "", price: "", stock_qty: "", image: "", sku: "" });
+    setFormData({
+      name: "",
+      description: "",
+      price: "",
+      stock_qty: "",
+      available_qty: "",
+      image: "",
+      sku: "",
+    });
     setImageFile(null);
     setIsModalOpen(true);
   };
@@ -141,49 +161,78 @@ const Stock = () => {
               {selectedProduct ? "Edit Product" : "Add Product"}
             </h3>
             <form onSubmit={handleSubmit} className="mt-4">
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                placeholder="Name"
-                className="w-full p-2 border rounded"
-                required
-              />
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                placeholder="Description"
-                className="w-full p-2 border rounded mt-2"
-              ></textarea>
-              <input
-                type="number"
-                name="price"
-                value={formData.price}
-                onChange={handleInputChange}
-                placeholder="Price"
-                className="w-full p-2 border rounded mt-2"
-                required
-              />
-              <input
-                type="number"
-                name="stock_qty"
-                value={formData.stock_qty}
-                onChange={handleInputChange}
-                placeholder="Stock Quantity"
-                className="w-full p-2 border rounded mt-2"
-                required
-              />
-              <input
-                type="text"
-                name="sku"
-                value={formData.sku}
-                onChange={handleInputChange}
-                placeholder="SKU"
-                className="w-full p-2 border rounded mt-2"
-                required
-              />
+              <div className="mt-2">
+                <label className="block text-sm font-medium text-gray-700">Product Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="Name"
+                  className="w-full p-2 border rounded"
+                  required
+                />
+              </div>
+              <div className="mt-2">
+                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder="Description"
+                  className="w-full p-2 border rounded"
+                ></textarea>
+              </div>
+              <div className="mt-2">
+                <label className="block text-sm font-medium text-gray-700">Price</label>
+                <input
+                  type="number"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleInputChange}
+                  placeholder="Price"
+                  className="w-full p-2 border rounded"
+                  required
+                />
+              </div>
+              <div className="mt-2">
+                <label className="block text-sm font-medium text-gray-700">Stock Quantity</label>
+                <input
+                  type="number"
+                  name="stock_qty"
+                  value={formData.stock_qty}
+                  onChange={handleInputChange}
+                  placeholder="Stock Quantity"
+                  className="w-full p-2 border rounded"
+                  required
+                />
+              </div>
+              {selectedProduct && (
+                <div className="mt-2">
+                  <label className="block text-sm font-medium text-gray-700">Available Quantity</label>
+                  <input
+                    type="number"
+                    name="available_qty"
+                    value={formData.available_qty}
+                    onChange={handleInputChange}
+                    placeholder="Available Quantity"
+                    className="w-full p-2 border rounded"
+                    required
+                  />
+                </div>
+              )}
+              <div className="mt-2">
+                <label className="block text-sm font-medium text-gray-700">SKU</label>
+                <input
+                  type="text"
+                  name="sku"
+                  value={formData.sku}
+                  onChange={handleInputChange}
+                  placeholder="SKU"
+                  className="w-full p-2 border rounded"
+                  required
+                />
+              </div>
               <div className="mt-2">
                 <label className="block text-sm font-medium text-gray-700">
                   Image
@@ -225,7 +274,8 @@ const Stock = () => {
             <h2 className="text-xl font-bold text-white">{product.name}</h2>
             <p className="text-white">{product.description}</p>
             <p className="font-bold mt-2 text-white">${product.price}</p>
-            <p className="text-white">Quantity: {product.stock_qty}</p>
+            <p className="text-white">Stock Quantity: {product.stock_qty}</p>
+            <p className="text-white">Available Quantity: {product.available_qty}</p>
             <div className="flex justify-end mt-2">
               <button
                 onClick={() => handleEdit(product)}
