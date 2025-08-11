@@ -17,6 +17,7 @@ import Stock from "./pages/Stock";
 import AIChat from "./pages/AIChat";
 import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
+import ProtectedRoute from "./components/common/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -30,7 +31,13 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route element={<AppLayout />}>
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <AppLayout />
+                  </ProtectedRoute>
+                }
+              >
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/whatsapp" element={<WhatsApp />} />
                 <Route path="/stock" element={<Stock />} />
