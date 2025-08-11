@@ -222,10 +222,10 @@ const Stock = () => {
               alt={product.name}
               className="w-full h-48 object-cover rounded mb-2"
             />
-            <h2 className="text-xl font-bold">{product.name}</h2>
-            <p>{product.description}</p>
-            <p className="font-bold mt-2">${product.price}</p>
-            <p>Quantity: {product.stock_qty}</p>
+            <h2 className="text-xl font-bold text-white">{product.name}</h2>
+            <p className="text-white">{product.description}</p>
+            <p className="font-bold mt-2 text-white">${product.price}</p>
+            <p className="text-white">Quantity: {product.stock_qty}</p>
             <div className="flex justify-end mt-2">
               <button
                 onClick={() => handleEdit(product)}
