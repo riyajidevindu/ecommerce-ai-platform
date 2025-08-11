@@ -13,5 +13,4 @@ class Product(Base):
     description = Column(String)
     stock_qty = Column(Integer)
     available_qty = Column(Integer)
-    image = Column(String)
-    
+    image = Column(String, nullable=True)

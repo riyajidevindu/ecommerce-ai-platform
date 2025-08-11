@@ -1,312 +1,250 @@
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { PlusCircle, Edit, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
-import "./Stock.css";
+  getProducts,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  uploadFile,
+  Product,
+} from "@/services/api";
+import { apiClient } from "@/services/api";
 
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  stock_qty: number;
-  available_qty: number;
-  description: string;
-  image: string;
-  sku: string;
-}
-
-export default function Stock() {
+const Stock = () => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [open, setOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    price: "",
+    stock_qty: "",
+    image: "",
+    sku: "",
+  });
   const [imageFile, setImageFile] = useState<File | null>(null);
 
   useEffect(() => {
-    fetch("http://localhost:8001/api/v1/products/")
-      .then((response) => {
-        if (!response.ok) throw new Error(`Products fetch failed: ${response.status}`);
-        return response.json();
-      })
-      .then((data) => setProducts(data))
-      .catch((err) => console.error("Products load error", err));
+    fetchProducts();
   }, []);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    let imageUrl = selectedProduct?.image || "";
+  const fetchProducts = async () => {
+    try {
+      const data = await getProducts();
+      setProducts(data);
+    } catch (error) {
+      console.error("Failed to fetch products:", error);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setImageFile(e.target.files[0]);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    let imageUrl = formData.image;
 
     if (imageFile) {
-      const imageFormData = new FormData();
-      imageFormData.append("file", imageFile);
-
-      const response = await fetch("http://localhost:8005/upload", {
-        method: "POST",
-        body: imageFormData,
-      });
-      if (!response.ok) throw new Error(`Upload failed: ${response.status}`);
-      const data = await response.json();
-      imageUrl = `http://localhost:8005${data.url}`;
+      try {
+        const data = await uploadFile(imageFile);
+        imageUrl = data.url;
+      } catch (error) {
+        console.error("Failed to upload image:", error);
+        return;
+      }
     }
 
-    const newProduct: Partial<Product> = {
-      sku: formData.get("sku") as string,
-      name: formData.get("name") as string,
-      price: parseFloat(formData.get("price") as string),
-      stock_qty: parseInt(formData.get("stock_qty") as string),
-      description: formData.get("description") as string,
+    const productData = {
+      ...formData,
+      price: parseFloat(formData.price),
+      stock_qty: parseInt(formData.stock_qty, 10),
       image: imageUrl,
     };
 
-    if (selectedProduct) {
-      newProduct.available_qty = parseInt(formData.get("available_qty") as string);
+    try {
+      if (selectedProduct) {
+        await updateProduct(selectedProduct.id, productData);
+      } else {
+        await createProduct(productData);
+      }
+      fetchProducts();
+      closeModal();
+    } catch (error) {
+      console.error("Failed to save product:", error);
     }
-
-    const url = selectedProduct
-      ? `http://localhost:8001/api/v1/products/${selectedProduct.id}`
-      : "http://localhost:8001/api/v1/products/";
-    const method = selectedProduct ? "PUT" : "POST";
-
-    fetch(url, {
-      method: method,
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(newProduct),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (selectedProduct) {
-          setProducts(
-            products.map((p) => (p.id === selectedProduct.id ? data : p))
-          );
-        } else {
-          setProducts([...products, data]);
-        }
-        setOpen(false);
-        setSelectedProduct(null);
-        setImageFile(null);
-      });
   };
 
-  const handleDelete = (productId: number) => {
-    fetch(`http://localhost:8001/api/v1/products/${productId}`, {
-      method: "DELETE",
-    }).then(() => {
-      setProducts(products.filter((p) => p.id !== productId));
+  const handleEdit = (product: Product) => {
+    setSelectedProduct(product);
+    setFormData({
+      name: product.name,
+      description: product.description,
+      price: product.price.toString(),
+      stock_qty: product.stock_qty.toString(),
+      image: product.image,
+      sku: product.sku,
     });
+    setImageFile(null);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (productId: number) => {
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      try {
+        await deleteProduct(productId);
+        fetchProducts();
+      } catch (error) {
+        console.error("Failed to delete product:", error);
+      }
+    }
+  };
+
+  const openModal = () => {
+    setSelectedProduct(null);
+    setFormData({ name: "", description: "", price: "", stock_qty: "", image: "", sku: "" });
+    setImageFile(null);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const getImageUrl = (path: string) => {
+    if (!path) return "";
+    if (path.startsWith("http")) return path;
+    const baseUrl = apiClient.defaults.baseURL;
+    return `${baseUrl}${path}`;
   };
 
   return (
-    <div className="p-4">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Stock</CardTitle>
-              <CardDescription>Manage your products.</CardDescription>
-            </div>
-            <Dialog
-              open={open}
-              onOpenChange={(isOpen) => {
-                setOpen(isOpen);
-                if (!isOpen) {
-                  setSelectedProduct(null);
-                }
-              }}
-            >
-              <DialogTrigger asChild>
-                <Button>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Add Product
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="dialog-content">
-                <DialogHeader>
-                  <DialogTitle>
-                    {selectedProduct ? "Edit Product" : "Add Product"}
-                  </DialogTitle>
-                  <DialogDescription>
-                    Fill in the details of the product.
-                  </DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleSubmit}>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="sku" className="text-right text-white">
-                        SKU
-                      </Label>
-                      <Input
-                        id="sku"
-                        name="sku"
-                        defaultValue={selectedProduct?.sku}
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="name" className="text-right text-white">
-                        Name
-                      </Label>
-                      <Input
-                        id="name"
-                        name="name"
-                        defaultValue={selectedProduct?.name}
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="price" className="text-right text-white">
-                        Price
-                      </Label>
-                      <Input
-                        id="price"
-                        name="price"
-                        type="number"
-                        defaultValue={selectedProduct?.price}
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="stock_qty" className="text-right text-white">
-                        Stock Quantity
-                      </Label>
-                      <Input
-                        id="stock_qty"
-                        name="stock_qty"
-                        type="number"
-                        defaultValue={selectedProduct?.stock_qty}
-                        className="col-span-3"
-                      />
-                    </div>
-                    {selectedProduct && (
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="available_qty" className="text-right text-white">
-                          Available Quantity
-                        </Label>
-                        <Input
-                          id="available_qty"
-                          name="available_qty"
-                          type="number"
-                          defaultValue={selectedProduct?.available_qty}
-                          className="col-span-3"
-                        />
-                      </div>
-                    )}
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="description" className="text-right text-white">
-                        Description
-                      </Label>
-                      <Input
-                        id="description"
-                        name="description"
-                        defaultValue={selectedProduct?.description}
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="image" className="text-right text-white">
-                        Image
-                      </Label>
-                      <Input
-                        id="image"
-                        name="image"
-                        type="file"
-                        onChange={(e) =>
-                          setImageFile(e.target.files ? e.target.files[0] : null)
-                        }
-                        className="col-span-3"
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button type="submit">Save</Button>
-                    <Button type="button" onClick={() => { setOpen(false); setSelectedProduct(null); setImageFile(null); }}>Close</Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Stock Management</h1>
+      <button
+        onClick={openModal}
+        className="bg-blue-500 text-white px-4 py-2 rounded mb-4"
+      >
+        Add Product
+      </button>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <h3 className="text-lg font-bold">
+              {selectedProduct ? "Edit Product" : "Add Product"}
+            </h3>
+            <form onSubmit={handleSubmit} className="mt-4">
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                placeholder="Name"
+                className="w-full p-2 border rounded"
+                required
+              />
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                placeholder="Description"
+                className="w-full p-2 border rounded mt-2"
+              ></textarea>
+              <input
+                type="number"
+                name="price"
+                value={formData.price}
+                onChange={handleInputChange}
+                placeholder="Price"
+                className="w-full p-2 border rounded mt-2"
+                required
+              />
+              <input
+                type="number"
+                name="stock_qty"
+                value={formData.stock_qty}
+                onChange={handleInputChange}
+                placeholder="Stock Quantity"
+                className="w-full p-2 border rounded mt-2"
+                required
+              />
+              <input
+                type="text"
+                name="sku"
+                value={formData.sku}
+                onChange={handleInputChange}
+                placeholder="SKU"
+                className="w-full p-2 border rounded mt-2"
+                required
+              />
+              <div className="mt-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Image
+                </label>
+                <input
+                  type="file"
+                  onChange={handleFileChange}
+                  className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+              </div>
+              <div className="flex justify-end mt-4">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="bg-gray-500 text-white px-4 py-2 rounded mr-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                >
+                  Save
+                </button>
+              </div>
+            </form>
           </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>SKU</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Stock Qty</TableHead>
-                <TableHead>Available Qty</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Image</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {products.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell>{product.sku}</TableCell>
-                  <TableCell>{product.name}</TableCell>
-                  <TableCell>{product.price}</TableCell>
-                  <TableCell>{product.stock_qty}</TableCell>
-                  <TableCell>{product.available_qty}</TableCell>
-                  <TableCell>{product.description}</TableCell>
-                  <TableCell>
-                    <img
-                      src={product.image.startsWith("http") ? product.image : `http://localhost:8005${product.image}`}
-                      alt={product.name}
-                      width="50"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        setSelectedProduct(product);
-                        setOpen(true);
-                      }}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(product.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {products.map((product) => (
+          <div key={product.id} className="border p-4 rounded">
+            <img
+              src={getImageUrl(product.image)}
+              alt={product.name}
+              className="w-full h-48 object-cover rounded mb-2"
+            />
+            <h2 className="text-xl font-bold">{product.name}</h2>
+            <p>{product.description}</p>
+            <p className="font-bold mt-2">${product.price}</p>
+            <p>Quantity: {product.stock_qty}</p>
+            <div className="flex justify-end mt-2">
+              <button
+                onClick={() => handleEdit(product)}
+                className="bg-yellow-500 text-white px-2 py-1 rounded mr-2"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => handleDelete(product.id)}
+                className="bg-red-500 text-white px-2 py-1 rounded"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
-}
+};
+
+export default Stock;

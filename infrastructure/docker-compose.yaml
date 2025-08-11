@@ -31,12 +31,16 @@ services:
   stock-service:
     build: ../services/stock-service
     image: riyaji/stock-service:latest
-    ports:
-      - "8001:8001"
+    expose:
+      - "8001"
     volumes:
       - ../services/stock-service/app:/app/app
     environment:
       - DATABASE_URL=postgresql://user:password@postgres-stock:5432/stock_db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.stock-service.rule=PathPrefix(`/api/v1/products`)"
+      - "traefik.http.services.stock-service.loadbalancer.server.port=8001"
 
   whatsapp-connector-service:
     build: ../services/whatsapp-connector-service
@@ -71,10 +75,14 @@ services:
   file-storage-service:
     build: ../services/file-storage-service
     image: riyaji/file-storage-service:latest
-    ports:
-      - "8005:8005"
+    expose:
+      - "8005"
     volumes:
       - file_storage_data:/uploads
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.file-storage-service.rule=PathPrefix(`/upload`) || PathPrefix(`/images`)"
+      - "traefik.http.services.file-storage-service.loadbalancer.server.port=8005"
 
 
   postgres:

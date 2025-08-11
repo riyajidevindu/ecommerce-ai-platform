@@ -7,7 +7,7 @@ class ProductBase(BaseModel):
     description: str
     stock_qty: int
     available_qty: Optional[int] = None
-    image: str
+    image: Optional[str] = None
     sku: str
 
 class ProductCreate(ProductBase):
