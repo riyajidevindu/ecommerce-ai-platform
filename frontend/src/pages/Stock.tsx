@@ -79,6 +79,7 @@ const Stock = () => {
           sku: formData.sku,
         };
 
+    console.log("Submitting product data:", productData);
     try {
       if (selectedProduct) {
         await updateProduct(selectedProduct.id, productData);
@@ -93,6 +94,7 @@ const Stock = () => {
   };
 
   const handleEdit = (product: Product) => {
+    console.log("Editing product:", product);
     setSelectedProduct(product);
     setFormData({
       name: product.name,

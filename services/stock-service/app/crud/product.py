@@ -25,8 +25,6 @@ def update_product(db: Session, product_id: int, product: product_schema.Product
         update_data = product.dict(exclude_unset=True)
         for key, value in update_data.items():
             setattr(db_product, key, value)
-        if "stock_qty" in update_data:
-            db_product.available_qty = update_data["stock_qty"]
         db.commit()
         db.refresh(db_product)
     return db_product
