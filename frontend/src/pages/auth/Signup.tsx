@@ -156,7 +156,7 @@ export default function Signup() {
               variant="default"
               color="gray"
               component="a"
-              href="http://localhost:8000/api/v1/auth/google/login"
+              href="http://localhost/api/v1/auth/google/login"
             >
               Google
             </Button>
