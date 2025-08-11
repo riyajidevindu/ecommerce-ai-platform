@@ -45,32 +45,44 @@ services:
   whatsapp-connector-service:
     build: ../services/whatsapp-connector-service
     image: riyaji/whatsapp-connector-service:latest
-    ports:
-      - "8002:8002"
+    expose:
+      - "8002"
     volumes:
       - ../services/whatsapp-connector-service/app:/app/app
     environment:
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whatsapp-connector-service.rule=PathPrefix(`/api/v1/whatsapp`)"
+      - "traefik.http.services.whatsapp-connector-service.loadbalancer.server.port=8002"
 
   ai-orchestrator-service:
     build: ../services/ai-orchestrator-service
     image: riyaji/ai-orchestrator-service:latest
-    ports:
-      - "8003:8003"
+    expose:
+      - "8003"
     volumes:
       - ../services/ai-orchestrator-service/app:/app/app
     environment:
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ai-orchestrator-service.rule=PathPrefix(`/api/v1/ai`)"
+      - "traefik.http.services.ai-orchestrator-service.loadbalancer.server.port=8003"
 
   notification-service:
     build: ../services/notification-service
     image: riyaji/notification-service:latest
-    ports:
-      - "8004:8004"
+    expose:
+      - "8004"
     volumes:
       - ../services/notification-service/app:/app/app
     environment:
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.notification-service.rule=PathPrefix(`/api/v1/notifications`)"
+      - "traefik.http.services.notification-service.loadbalancer.server.port=8004"
 
   file-storage-service:
     build: ../services/file-storage-service
