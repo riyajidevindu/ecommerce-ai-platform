@@ -1,9 +1,9 @@
 .dialog-content {
-  background-color: white;
+  background-color: rgb(225, 215, 215);
   color: black;
 }
 
 .dialog-content input {
-  background-color: #f3f4f6;
+  background-color: #aeb7c9;
   color: black;
 }
