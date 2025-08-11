@@ -2,9 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1 import auth, users
 from app.db.session import engine
-from app.models import user
+from app.models import user, session
 
 user.Base.metadata.create_all(bind=engine)
+session.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Auth Service",
