@@ -1,7 +1,6 @@
-from sqlalchemy import Column, Integer, String, Float
-from sqlalchemy.ext.declarative import declarative_base
-
-Base = declarative_base()
+from sqlalchemy import Column, Integer, String, Float, ForeignKey
+from sqlalchemy.orm import relationship
+from app.db.base import Base
 
 class Product(Base):
     __tablename__ = "products"
@@ -14,3 +13,6 @@ class Product(Base):
     stock_qty = Column(Integer)
     available_qty = Column(Integer)
     image = Column(String, nullable=True)
+    owner_id = Column(Integer, ForeignKey("users.id"))
+
+    owner = relationship("User", back_populates="products")

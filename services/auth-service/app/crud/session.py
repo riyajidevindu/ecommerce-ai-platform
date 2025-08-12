@@ -1,10 +1,10 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.models.session import Session
 from app.schemas.session import SessionCreate
 import uuid
 
 def get_session(db: Session, session_id: str):
-    return db.query(Session).filter(Session.id == session_id).first()
+    return db.query(Session).options(joinedload(Session.user)).filter(Session.id == session_id).first()
 
 def create_session(db: Session, session: SessionCreate):
     db_session = Session(id=str(uuid.uuid4()), user_id=session.user_id, user_agent=session.user_agent)

@@ -35,12 +35,17 @@ services:
       - "8001"
     volumes:
       - ../services/stock-service/app:/app/app
+    env_file:
+      - ../.env
     environment:
       - DATABASE_URL=postgresql://user:password@postgres-stock:5432/stock_db
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.stock-service.rule=PathPrefix(`/api/v1/products`)"
       - "traefik.http.services.stock-service.loadbalancer.server.port=8001"
+    depends_on:
+      postgres-stock:
+        condition: service_healthy
 
   whatsapp-connector-service:
     build: ../services/whatsapp-connector-service
@@ -116,6 +121,11 @@ services:
       - "5434:5432"
     volumes:
       - postgres_stock_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d stock_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   rabbitmq:
     image: rabbitmq:3-management
