@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, ForeignKey
 from sqlalchemy.orm import relationship
-from app.db.base import Base
+from ..db.base import Base
 
 class Customer(Base):
     __tablename__ = "customers"

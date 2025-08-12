@@ -156,6 +156,9 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    # Persist data to avoid losing queues/users and ensure consistent permissions
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
 
   postgres-whatsapp:
     image: postgres:13
@@ -195,3 +198,4 @@ volumes:
   postgres_whatsapp_data:
   postgres_ai_data:
   file_storage_data:
+  rabbitmq_data:
