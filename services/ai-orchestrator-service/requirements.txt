@@ -1,6 +1,7 @@
 fastapi
-uvicorn
+uvicorn[standard]
 sqlalchemy
-python-dotenv
-google-generativeai
 psycopg2-binary
+pydantic[email]
+google-generativeai
+pika
