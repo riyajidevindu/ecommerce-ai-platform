@@ -11,6 +11,108 @@ from app.schemas import user as user_schema
 RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/%2F")
 logger = logging.getLogger(__name__)
 
+def publish_product_created(product_data: dict):
+    """
+    Publishes a message to the 'product_events' exchange when a product is created.
+    """
+    try:
+        logger.info(f"Connecting to RabbitMQ at {RABBITMQ_URL}")
+        connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_URL))
+        channel = connection.channel()
+        logger.info("Successfully connected to RabbitMQ.")
+
+        exchange_name = 'product_events'
+        
+        channel.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
+        
+        message = {
+            "event_type": "product_created",
+            "product": product_data
+        }
+        
+        channel.basic_publish(
+            exchange=exchange_name,
+            routing_key='',
+            body=json.dumps(message),
+            properties=pika.BasicProperties(
+                delivery_mode=2,  # make message persistent
+            ))
+        
+        logger.info(f" [x] Sent product.created:{json.dumps(message)}")
+        connection.close()
+    except pika.exceptions.AMQPConnectionError as e:
+        logger.error(f"Failed to connect to RabbitMQ: {e}")
+    except Exception as e:
+        logger.error(f"An error occurred while publishing message: {e}")
+
+def publish_product_updated(product_data: dict):
+    """
+    Publishes a message to the 'product_events' exchange when a product is updated.
+    """
+    try:
+        logger.info(f"Connecting to RabbitMQ at {RABBITMQ_URL}")
+        connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_URL))
+        channel = connection.channel()
+        logger.info("Successfully connected to RabbitMQ.")
+
+        exchange_name = 'product_events'
+        
+        channel.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
+        
+        message = {
+            "event_type": "product_updated",
+            "product": product_data
+        }
+        
+        channel.basic_publish(
+            exchange=exchange_name,
+            routing_key='',
+            body=json.dumps(message),
+            properties=pika.BasicProperties(
+                delivery_mode=2,  # make message persistent
+            ))
+        
+        logger.info(f" [x] Sent product.updated:{json.dumps(message)}")
+        connection.close()
+    except pika.exceptions.AMQPConnectionError as e:
+        logger.error(f"Failed to connect to RabbitMQ: {e}")
+    except Exception as e:
+        logger.error(f"An error occurred while publishing message: {e}")
+
+def publish_product_deleted(product_id: int):
+    """
+    Publishes a message to the 'product_events' exchange when a product is deleted.
+    """
+    try:
+        logger.info(f"Connecting to RabbitMQ at {RABBITMQ_URL}")
+        connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_URL))
+        channel = connection.channel()
+        logger.info("Successfully connected to RabbitMQ.")
+
+        exchange_name = 'product_events'
+        
+        channel.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
+        
+        message = {
+            "event_type": "product_deleted",
+            "product_id": product_id
+        }
+        
+        channel.basic_publish(
+            exchange=exchange_name,
+            routing_key='',
+            body=json.dumps(message),
+            properties=pika.BasicProperties(
+                delivery_mode=2,  # make message persistent
+            ))
+        
+        logger.info(f" [x] Sent product.deleted:{json.dumps(message)}")
+        connection.close()
+    except pika.exceptions.AMQPConnectionError as e:
+        logger.error(f"Failed to connect to RabbitMQ: {e}")
+    except Exception as e:
+        logger.error(f"An error occurred while publishing message: {e}")
+
 def start_consumer():
     """
     Starts the RabbitMQ consumer to listen for user events.

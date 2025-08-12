@@ -5,7 +5,7 @@ from ..db.base import Base
 class Product(Base):
     __tablename__ = "products"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=False)
     user_id = Column(Integer, ForeignKey("users.id"))
     name = Column(String, index=True)
     sku = Column(String, unique=True, index=True)
