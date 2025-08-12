@@ -10,8 +10,10 @@ class Product(Base):
     name = Column(String, index=True)
     sku = Column(String, unique=True, index=True)
     price = Column(Float)
+    description = Column(String, nullable=True)
     image_url = Column(String, nullable=True)
-    availability_qty = Column(Integer, nullable=True)
     stock_qty = Column(Integer, nullable=True)
+    availability_qty = Column(Integer, nullable=True)
+ 
 
     user = relationship("User", back_populates="products")
