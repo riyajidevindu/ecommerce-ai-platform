@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+import { notifications } from "@mantine/notifications";
+import { Text } from "@mantine/core";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { apiClient } from "@/services/api";
@@ -17,7 +18,6 @@ interface User {
 
 export default function WhatsApp() {
   const { theme } = useTheme();
-  const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [whatsappNo, setWhatsappNo] = useState("");
 
@@ -37,21 +37,32 @@ export default function WhatsApp() {
 
   const handleSave = async () => {
     if (user) {
+      const phoneRegex = /^\+[1-9]\d{1,14}$/;
+      if (!phoneRegex.test(whatsappNo)) {
+        notifications.show({
+          title: <Text size="lg">Error</Text>,
+          message: <Text size="md">Invalid phone number format. Please use E.164 format (e.g., +1234567890).</Text>,
+          color: "red",
+        });
+        return;
+      }
+
       try {
         await apiClient.put(`/api/v1/whatsapp/users/${user.id}?whatsapp_no=${whatsappNo}`);
         const userResponse = await apiClient.get<User>(`/api/v1/whatsapp/users/${user.id}`);
         setUser(userResponse.data);
         setWhatsappNo(userResponse.data.whatsapp_no || "");
-        toast({
-          title: "Success",
-          description: "WhatsApp number updated successfully.",
+        notifications.show({
+          title: <Text size="lg">Success</Text>,
+          message: <Text size="md">WhatsApp number updated successfully.</Text>,
+          color: "green",
         });
       } catch (error) {
         console.error("Failed to update WhatsApp number:", error);
-        toast({
-          title: "Error",
-          description: "Failed to update WhatsApp number.",
-          variant: "destructive",
+        notifications.show({
+          title: <Text size="lg">Error</Text>,
+          message: <Text size="md">Failed to update WhatsApp number.</Text>,
+          color: "red",
         });
       }
     }
