@@ -1,83 +1,111 @@
 import { Helmet } from "react-helmet-async";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { ReloadIcon } from "@radix-ui/react-icons";
 
 interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
+  id: number;
+  user_id: number;
+  message: string;
+  response: string | null;
+  created_at: string;
 }
 
 export default function AIChat() {
-  const [messages, setMessages] = useState<Message[]>([
-    { id: "1", role: "user", content: "Hi! What is the status of my order #12345?" },
-    { id: "2", role: "assistant", content: "Your order #12345 has been shipped and will arrive by Friday." },
-  ]);
-  const [input, setInput] = useState("");
-  const [draft, setDraft] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const previewReply = () => {
-    // Simulate AI proposal
-    setDraft(`Proposed reply: Hello! Thanks for reaching out. ${input}`);
+  const fetchMessages = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/v1/messages");
+      if (!response.ok) {
+        throw new Error("Failed to fetch messages.");
+      }
+      const data = await response.json();
+      setMessages(data);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const approveAndSend = () => {
-    if (!draft.trim()) return;
-    setMessages((m) => [...m, { id: Date.now().toString(), role: "assistant", content: draft }]);
-    setDraft("");
-    setInput("");
+  const processMessages = async () => {
+    setIsProcessing(true);
+    try {
+      const response = await fetch("/api/v1/process-messages", { method: "POST" });
+      if (!response.ok) {
+        throw new Error("Failed to process messages.");
+      }
+      // Refresh messages after processing
+      fetchMessages();
+    } catch (error) {
+      console.error("Error processing messages:", error);
+    } finally {
+      setIsProcessing(false);
+    }
   };
+
+  useEffect(() => {
+    fetchMessages();
+  }, []);
 
   return (
     <div>
       <Helmet>
-        <title>AI Chat Automation – AI Seller Assistant</title>
-        <meta name="description" content="Preview, approve or edit AI-generated replies before sending." />
+        <title>AI Automated Responses – AI Seller Assistant</title>
+        <meta name="description" content="View automated AI-generated responses to customer messages." />
         <link rel="canonical" href="/ai-chat" />
       </Helmet>
 
-      <h1 className="text-2xl md:text-3xl font-display font-semibold mb-6">AI Chat Automation</h1>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Conversation</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3 max-h-[480px] overflow-auto pr-2">
-                {messages.map((m) => (
-                  <div key={m.id} className={`p-3 rounded-md border ${m.role === 'assistant' ? 'bg-secondary' : 'bg-card'}`}>
-                    <div className="text-xs text-muted-foreground mb-1">{m.role === 'assistant' ? 'Assistant' : 'Customer'}</div>
-                    <div>{m.content}</div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Compose</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Input placeholder="Customer message context" value={input} onChange={(e) => setInput(e.target.value)} />
-              <Button onClick={previewReply}>Generate Reply</Button>
-              <Textarea placeholder="Edit the AI draft here" value={draft} onChange={(e) => setDraft(e.target.value)} rows={6} />
-              <div className="flex gap-2">
-                <Button onClick={approveAndSend}>Approve & Send</Button>
-                <Button variant="secondary" onClick={() => setDraft("")}>Discard</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl md:text-3xl font-display font-semibold">AI Automated Responses</h1>
+        <div className="flex gap-2">
+          <Button onClick={fetchMessages} disabled={isLoading}>
+            <ReloadIcon className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+          <Button onClick={processMessages} disabled={isProcessing}>
+            {isProcessing ? "Processing..." : "Process New Messages"}
+          </Button>
+        </div>
       </div>
+
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Conversations</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {messages.length === 0 && !isLoading && (
+                <p className="text-muted-foreground">No conversations yet. New messages from WhatsApp will appear here.</p>
+              )}
+              {isLoading && <p>Loading conversations...</p>}
+              {messages.map((msg) => (
+                <div key={msg.id} className="p-4 rounded-md border">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-semibold">User ID: {msg.user_id}</span>
+                    <span className="text-xs text-muted-foreground">{new Date(msg.created_at).toLocaleString()}</span>
+                  </div>
+                  <div className="p-3 rounded-md bg-card mb-2">
+                    <p className="font-semibold mb-1">Customer Message:</p>
+                    <p>{msg.message}</p>
+                  </div>
+                  <div className={`p-3 rounded-md ${msg.response ? 'bg-secondary' : 'bg-muted'}`}>
+                    <p className="font-semibold mb-1">AI Response:</p>
+                    <p>{msg.response || "Awaiting response..."}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 }
