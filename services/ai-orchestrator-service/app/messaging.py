@@ -52,6 +52,25 @@ def on_message_callback(ch, method, properties, body):
                     logger.info(f"Product {product_data['name']} already exists in ai-orchestrator-service.")
             finally:
                 db.close()
+    elif data.get("event_type") == "product_updated":
+        product_data = data.get("product")
+        if product_data:
+            db: Session = SessionLocal()
+            try:
+                product = ProductCreate(**product_data)
+                product_crud.update_product(db, product_id=product_data["id"], product=product)
+                logger.info(f"Product {product_data['name']} updated in ai-orchestrator-service.")
+            finally:
+                db.close()
+    elif data.get("event_type") == "product_deleted":
+        product_id = data.get("product_id")
+        if product_id:
+            db: Session = SessionLocal()
+            try:
+                product_crud.delete_product(db, product_id=product_id)
+                logger.info(f"Product with ID {product_id} deleted from ai-orchestrator-service.")
+            finally:
+                db.close()
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
 def start_consumer():
