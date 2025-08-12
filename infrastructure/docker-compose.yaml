@@ -23,10 +23,15 @@ services:
       - ../services/auth-service/app:/app/app
     env_file:
       - ../.env
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.auth-service.rule=PathPrefix(`/api/v1/auth`) || PathPrefix(`/api/v1/users`)"
       - "traefik.http.services.auth-service.loadbalancer.server.port=8000"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 
   stock-service:
     build: ../services/stock-service
@@ -45,6 +50,8 @@ services:
       - "traefik.http.services.stock-service.loadbalancer.server.port=8001"
     depends_on:
       postgres-stock:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
 
   whatsapp-connector-service:
@@ -132,6 +139,11 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:

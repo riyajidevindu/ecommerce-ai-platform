@@ -17,6 +17,8 @@ python-multipart = "*"
 authlib = "*"
 itsdangerous = "*"
 starlette = "*"
+pika = "*"
+bcrypt = "==3.2.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"

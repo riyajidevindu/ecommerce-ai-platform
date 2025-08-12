@@ -1,10 +1,12 @@
 import logging
+import threading
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1 import products
 from app.db.session import engine
 from app.db.base import Base
 from app.models import product, user # Import the models to register them with Base
+from app.messaging import start_consumer
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -24,6 +26,11 @@ async def startup_event():
     logger.info("Starting up and initializing database...")
     init_db()
     logger.info("Database initialized.")
+    
+    # Start the RabbitMQ consumer in a background thread
+    consumer_thread = threading.Thread(target=start_consumer, daemon=True)
+    consumer_thread.start()
+    logger.info("RabbitMQ consumer started.")
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
