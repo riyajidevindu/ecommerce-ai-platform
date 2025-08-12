@@ -6,6 +6,9 @@ from .db.base import Base
 from .models import user, customer, message, product
 from pydantic import BaseModel
 from typing import List
+import threading
+from . import messaging
+from .db.session import SessionLocal
 
 def init_db():
     Base.metadata.create_all(bind=engine)
@@ -29,6 +32,8 @@ app = FastAPI(
 @app.on_event("startup")
 async def startup_event():
     init_db()
+    consumer_thread = threading.Thread(target=messaging.start_consumer, daemon=True)
+    consumer_thread.start()
 
 @app.post("/api/v1/process-messages")
 async def process_new_messages(db: Session = Depends(get_db)):

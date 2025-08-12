@@ -12,7 +12,7 @@ def get_users(db: Session, skip: int = 0, limit: int = 100):
     return db.query(User).offset(skip).limit(limit).all()
 
 def create_user(db: Session, user: UserCreate):
-    db_user = User(name=user.name, whatsapp_no=user.whatsapp_no)
+    db_user = User(id=user.id, name=user.name, whatsapp_no=user.whatsapp_no)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)

@@ -22,13 +22,12 @@ def start_consumer():
             channel = connection.channel()
             logger.info("Consumer successfully connected to RabbitMQ.")
 
-            exchange_name = 'user_events'
+            exchange_name = 'user_fanout_events'
             queue_name = 'stock_service_user_events'
-            routing_key = 'user.created'
 
-            channel.exchange_declare(exchange=exchange_name, exchange_type='topic', durable=True)
+            channel.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
             channel.queue_declare(queue=queue_name, durable=True)
-            channel.queue_bind(queue=queue_name, exchange=exchange_name, routing_key=routing_key)
+            channel.queue_bind(queue=queue_name, exchange=exchange_name)
 
             def callback(ch, method, properties, body):
                 logger.info(f" [x] Received {method.routing_key}:{body}")

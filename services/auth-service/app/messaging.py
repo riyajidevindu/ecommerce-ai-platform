@@ -16,10 +16,10 @@ def publish_user_created(user_data: dict):
         channel = connection.channel()
         logger.info("Successfully connected to RabbitMQ.")
 
-        exchange_name = 'user_events'
+        exchange_name = 'user_fanout_events'
         routing_key = 'user.created'
         
-        channel.exchange_declare(exchange=exchange_name, exchange_type='topic', durable=True)
+        channel.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
         
         message = {
             "event_type": "user_created",
@@ -28,7 +28,7 @@ def publish_user_created(user_data: dict):
         
         channel.basic_publish(
             exchange=exchange_name,
-            routing_key=routing_key,
+            routing_key='',
             body=json.dumps(message),
             properties=pika.BasicProperties(
                 delivery_mode=2,  # make message persistent
