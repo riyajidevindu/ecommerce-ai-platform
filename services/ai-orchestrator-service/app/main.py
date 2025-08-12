@@ -1,9 +1,14 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from . import message_processor
-from .db import get_db, Base, engine
+from .db.session import get_db, engine
+from .db.base import Base
+from .models import user, customer, message, product
 from pydantic import BaseModel
 from typing import List
+
+def init_db():
+    Base.metadata.create_all(bind=engine)
 
 class Message(BaseModel):
     id: int
@@ -15,14 +20,15 @@ class Message(BaseModel):
     class Config:
         orm_mode = True
 
-# Create the database tables
-Base.metadata.create_all(bind=engine)
-
 app = FastAPI(
     title="AI Orchestrator Service",
     description="Orchestrates AI models and services.",
     version="0.1.0"
 )
+
+@app.on_event("startup")
+async def startup_event():
+    init_db()
 
 @app.post("/api/v1/process-messages")
 async def process_new_messages(db: Session = Depends(get_db)):
