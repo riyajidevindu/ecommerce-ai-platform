@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from . import message_processor
 from .db.session import get_db, engine
@@ -19,6 +20,14 @@ app = FastAPI(
     title="AI Orchestrator Service",
     description="Orchestrates AI models and services.",
     version="0.1.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8080"],  # Adjust this to your frontend's origin
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.on_event("startup")
