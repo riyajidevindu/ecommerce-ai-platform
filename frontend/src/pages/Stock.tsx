@@ -192,6 +192,7 @@ const Stock = () => {
                   name="price"
                   value={formData.price}
                   onChange={handleInputChange}
+                  onWheel={(e) => e.currentTarget.blur()}
                   placeholder="Price"
                   className="w-full p-2 border rounded"
                   required
@@ -204,6 +205,7 @@ const Stock = () => {
                   name="stock_qty"
                   value={formData.stock_qty}
                   onChange={handleInputChange}
+                  onWheel={(e) => e.currentTarget.blur()}
                   placeholder="Stock Quantity"
                   className="w-full p-2 border rounded"
                   required
@@ -217,6 +219,7 @@ const Stock = () => {
                     name="available_qty"
                     value={formData.available_qty}
                     onChange={handleInputChange}
+                    onWheel={(e) => e.currentTarget.blur()}
                     placeholder="Available Quantity"
                     className="w-full p-2 border rounded"
                     required
