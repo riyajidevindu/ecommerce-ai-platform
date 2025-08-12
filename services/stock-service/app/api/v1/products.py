@@ -7,6 +7,7 @@ from app.schemas import product as product_schema
 from app.db.session import get_db
 from app.core.dependencies import get_current_user
 from app.models.user import User
+from app.messaging import publish_product_created
 
 router = APIRouter()
 
@@ -15,7 +16,19 @@ def create_product(product: product_schema.ProductCreate, db: Session = Depends(
     db_product = product_crud.get_product_by_sku(db, sku=product.sku)
     if db_product:
         raise HTTPException(status_code=400, detail="SKU already registered")
-    return product_crud.create_product(db=db, product=product, user_id=current_user.id)
+    new_product = product_crud.create_product(db=db, product=product, user_id=current_user.id)
+    publish_product_created(product_data={
+        "id": new_product.id,
+        "name": new_product.name,
+        "sku": new_product.sku,
+        "price": new_product.price,
+        "description": new_product.description,
+        "image_url": new_product.image,
+        "availability_qty": new_product.available_qty,
+        "stock_qty": new_product.stock_qty,
+        "user_id": new_product.owner_id
+    })
+    return new_product
 
 @router.get("/", response_model=List[product_schema.Product])
 def read_products(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
