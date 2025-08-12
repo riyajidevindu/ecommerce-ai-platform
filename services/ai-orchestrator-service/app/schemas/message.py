@@ -1,17 +1,21 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import List
 
 class MessageBase(BaseModel):
-    user_message: Optional[str] = None
-    response_message: Optional[str] = None
-    is_send_response: bool = False
-
-class MessageCreate(MessageBase):
-    customer_id: int
+    user_message: str
+    response_message: str | None = None
 
 class Message(MessageBase):
     id: int
     customer_id: int
+
+    class Config:
+        orm_mode = True
+
+class Conversation(BaseModel):
+    whatsapp_no: str
+    first_message: str
+    messages: List[Message]
 
     class Config:
         orm_mode = True

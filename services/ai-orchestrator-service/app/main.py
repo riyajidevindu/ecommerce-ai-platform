@@ -4,6 +4,8 @@ from . import message_processor
 from .db.session import get_db, engine
 from .db.base import Base
 from .models import user, customer, message, product
+from .schemas.message import Conversation
+from .crud.message import get_conversations
 from pydantic import BaseModel
 from typing import List
 import threading
@@ -12,16 +14,6 @@ from .db.session import SessionLocal
 
 def init_db():
     Base.metadata.create_all(bind=engine)
-
-class Message(BaseModel):
-    id: int
-    user_id: int
-    message: str
-    response: str | None = None
-    created_at: str
-
-    class Config:
-        orm_mode = True
 
 app = FastAPI(
     title="AI Orchestrator Service",
@@ -51,16 +43,12 @@ async def process_new_messages(db: Session = Depends(get_db)):
         
     return {"status": "ok", "processed_messages": len(new_messages)}
 
-@app.get("/api/v1/messages", response_model=List[Message])
-async def get_messages(db: Session = Depends(get_db)):
+@app.get("/api/v1/ai/conversations", response_model=List[Conversation])
+async def get_conversations_endpoint(db: Session = Depends(get_db)):
     """
-    Fetch all messages with their responses.
+    Fetch all conversations with their messages.
     """
-    # This is a placeholder for fetching messages from the database
-    return [
-        Message(id=1, user_id=123, message="Do you have any laptops in stock?", response="Yes, we have laptops in stock.", created_at="2024-01-01T12:00:00Z"),
-        Message(id=2, user_id=456, message="I need a new mouse.", response="We have a variety of mice available.", created_at="2024-01-01T12:05:00Z"),
-    ]
+    return get_conversations(db)
 
 @app.get("/health")
 def health_check():

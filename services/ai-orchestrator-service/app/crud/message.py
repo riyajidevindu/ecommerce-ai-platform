@@ -1,16 +1,34 @@
-from sqlalchemy.orm import Session
-from app.models.message import Message
-from app.schemas.message import MessageCreate
+from sqlalchemy.orm import Session, joinedload
+from ..models.message import Message
+from ..models.customer import Customer
+from typing import List
 
-def get_message(db: Session, message_id: int):
-    return db.query(Message).filter(Message.id == message_id).first()
+def get_conversations(db: Session) -> List[dict]:
+    conversations = (
+        db.query(Customer)
+        .options(joinedload(Customer.messages))
+        .all()
+    )
 
-def get_messages_by_customer(db: Session, customer_id: int, skip: int = 0, limit: int = 100):
-    return db.query(Message).filter(Message.customer_id == customer_id).offset(skip).limit(limit).all()
+    result = []
+    for customer in conversations:
+        if not customer.messages:
+            continue
 
-def create_message(db: Session, message: MessageCreate):
-    db_message = Message(**message.dict())
-    db.add(db_message)
-    db.commit()
-    db.refresh(db_message)
-    return db_message
+        first_message = customer.messages[0]
+        result.append(
+            {
+                "whatsapp_no": customer.whatsapp_no,
+                "first_message": first_message.user_message,
+                "messages": [
+                    {
+                        "id": msg.id,
+                        "customer_id": msg.customer_id,
+                        "user_message": msg.user_message,
+                        "response_message": msg.response_message,
+                    }
+                    for msg in customer.messages
+                ],
+            }
+        )
+    return result

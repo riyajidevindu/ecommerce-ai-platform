@@ -164,3 +164,27 @@ export const uploadFile = async (file: File): Promise<UploadResponse> => {
     throw error;
   }
 };
+
+// AI Orchestrator Service
+export interface Message {
+  id: number;
+  customer_id: number;
+  user_message: string;
+  response_message: string | null;
+}
+
+export interface Conversation {
+  whatsapp_no: string;
+  first_message: string;
+  messages: Message[];
+}
+
+export const getConversations = async (): Promise<Conversation[]> => {
+  try {
+    const response = await apiClient.get<Conversation[]>('/api/v1/ai/conversations');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching conversations:', error);
+    throw error;
+  }
+};
