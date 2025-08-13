@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from app.db.session import engine
 from app.db.base import Base
 from app.models import user, customer, message
-from app.api.v1 import users
+from app.api.v1 import users, whatsapp
 import threading
 from . import messaging
 from fastapi.middleware.cors import CORSMiddleware
@@ -36,6 +36,7 @@ async def startup_event():
     consumer_thread.start()
 
 app.include_router(users.router, prefix="/api/v1/whatsapp/users", tags=["users"])
+app.include_router(whatsapp.router, prefix="/api/v1/whatsapp", tags=["whatsapp"])
 
 @app.get("/health")
 def health_check():

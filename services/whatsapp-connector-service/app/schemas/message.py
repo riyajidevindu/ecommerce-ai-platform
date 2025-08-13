@@ -1,18 +1,16 @@
 from pydantic import BaseModel
-from typing import Optional
 
 class MessageBase(BaseModel):
+    customer_id: int
     message: str
-    send_ai: bool = False
-    send_customer: bool = False
-    response_message: Optional[str] = None
 
 class MessageCreate(MessageBase):
-    customer_id: int
+    pass
 
 class Message(MessageBase):
     id: int
-    customer_id: int
+    response_message: str
+    is_send_response: bool
 
     class Config:
-        orm_mode = True
+        from_attributes = True
