@@ -1,10 +1,25 @@
 from sqlalchemy.orm import Session, joinedload
 from ..models.message import Message
+from ..schemas.message import MessageBase
 from ..models.customer import Customer
 from typing import List
 
+def create_message(db: Session, message: MessageBase, customer_id: int, message_id: int) -> Message:
+    db_message = Message(
+        id=message_id,
+        customer_id=customer_id,
+        user_message=message.user_message
+    )
+    db.add(db_message)
+    db.commit()
+    db.refresh(db_message)
+    return db_message
+
 def get_unprocessed_messages(db: Session) -> List[Message]:
     return db.query(Message).filter(Message.is_send_response == False).all()
+
+def get_message(db: Session, message_id: int) -> Message | None:
+    return db.query(Message).filter(Message.id == message_id).first()
 
 def update_message_response(db: Session, message_id: int, response_message: str):
     db_message = db.query(Message).filter(Message.id == message_id).first()

@@ -10,6 +10,5 @@ class Message(Base):
     user_message = Column(String, nullable=True)
     response_message = Column(String, nullable=True)
     is_send_response = Column(Boolean, default=False)
-    created_at = Column(String, index=True)
 
     customer = relationship("Customer", back_populates="messages")

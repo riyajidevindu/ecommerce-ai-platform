@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from .crud.message import update_message_response
 from .crud.product import get_products_by_user_id
 from .models.message import Message
+from . import messaging
 
 def process_message(message: Message, db: Session):
     """
@@ -19,4 +20,5 @@ def process_message(message: Message, db: Session):
         reply = gemini_client.generate_response(prompt)
 
     update_message_response(db, message.id, reply)
+    messaging.publish_ai_response(message.id, reply)
     print(f"Reply for message {message.id}: {reply}")
