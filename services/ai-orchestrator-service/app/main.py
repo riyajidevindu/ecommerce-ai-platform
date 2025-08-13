@@ -6,7 +6,7 @@ from .db.session import get_db, engine
 from .db.base import Base
 from .models import user, customer, message, product
 from .schemas.message import Conversation
-from .crud.message import get_conversations
+from .crud.message import get_conversations, get_unprocessed_messages
 from pydantic import BaseModel
 from typing import List
 import threading
@@ -41,11 +41,7 @@ async def process_new_messages(db: Session = Depends(get_db)):
     """
     Processes messages that have not yet been responded to.
     """
-    # This is a placeholder for fetching new messages from the database
-    new_messages = [
-        {"id": 1, "message": "Do you have any laptops in stock?"},
-        {"id": 2, "message": "I need a new mouse."},
-    ]
+    new_messages = get_unprocessed_messages(db)
     
     for msg in new_messages:
         message_processor.process_message(msg, db)

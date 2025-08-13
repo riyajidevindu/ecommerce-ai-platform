@@ -3,6 +3,18 @@ from ..models.message import Message
 from ..models.customer import Customer
 from typing import List
 
+def get_unprocessed_messages(db: Session) -> List[Message]:
+    return db.query(Message).filter(Message.is_send_response == False).all()
+
+def update_message_response(db: Session, message_id: int, response_message: str):
+    db_message = db.query(Message).filter(Message.id == message_id).first()
+    if db_message:
+        db_message.response_message = response_message
+        db_message.is_send_response = True
+        db.commit()
+        db.refresh(db_message)
+    return db_message
+
 def get_conversations(db: Session) -> List[dict]:
     conversations = (
         db.query(Customer)
