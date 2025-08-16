@@ -1,157 +1,305 @@
-import { Helmet } from "react-helmet-async";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { motion } from "framer-motion";
-import { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useState, useEffect } from "react";
+import {
+  getProducts,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  uploadFile,
+  Product,
+} from "@/services/api";
+import { apiClient } from "@/services/api";
 
-const productSchema = z.object({
-  name: z.string().min(2),
-  price: z.coerce.number().min(0),
-  quantity: z.coerce.number().min(0),
-  image: z.any().optional(),
-});
-
-type Product = z.infer<typeof productSchema> & { id: string };
-
-
-export default function Stock() {
+const Stock = () => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState("all");
-  const [page, setPage] = useState(1);
-  const pageSize = 5;
-
-  const { register, handleSubmit, reset, formState } = useForm<z.infer<typeof productSchema>>({
-    resolver: zodResolver(productSchema),
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    price: "",
+    stock_qty: "",
+    available_qty: "",
+    image: "",
+    sku: "",
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
-  const onSubmit = (data: z.infer<typeof productSchema>) => {
-    const file = (data.image as FileList | undefined)?.[0];
-    const id = Math.random().toString(36).slice(2, 9);
-    setProducts((prev) => [
-      {
-        id,
-        name: data.name,
-        price: Number(data.price),
-        quantity: Number(data.quantity),
-        image: file ? URL.createObjectURL(file) : undefined,
-      },
-      ...prev,
-    ]);
-    reset();
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const data = await getProducts();
+      setProducts(data);
+    } catch (error) {
+      console.error("Failed to fetch products:", error);
+    }
   };
 
-  const filtered = useMemo(() => {
-    let list = products.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()));
-    if (filter === "low") list = list.filter((p) => p.quantity < 5);
-    if (filter === "oos") list = list.filter((p) => p.quantity === 0);
-    return list;
-  }, [products, query, filter]);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const pageData = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setImageFile(e.target.files[0]);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    let imageUrl = formData.image;
+
+    if (imageFile) {
+      try {
+        const data = await uploadFile(imageFile);
+        imageUrl = data.url;
+      } catch (error) {
+        console.error("Failed to upload image:", error);
+        return;
+      }
+    }
+
+    const productData = selectedProduct
+      ? {
+          ...formData,
+          price: parseFloat(formData.price),
+          stock_qty: parseInt(formData.stock_qty, 10),
+          available_qty: parseInt(formData.available_qty, 10),
+          image: imageUrl,
+        }
+      : {
+          name: formData.name,
+          description: formData.description,
+          price: parseFloat(formData.price),
+          stock_qty: parseInt(formData.stock_qty, 10),
+          image: imageUrl,
+          sku: formData.sku,
+        };
+
+    console.log("Submitting product data:", productData);
+    try {
+      if (selectedProduct) {
+        await updateProduct(selectedProduct.id, productData);
+      } else {
+        await createProduct(productData);
+      }
+      fetchProducts();
+      closeModal();
+    } catch (error) {
+      console.error("Failed to save product:", error);
+    }
+  };
+
+  const handleEdit = (product: Product) => {
+    console.log("Editing product:", product);
+    setSelectedProduct(product);
+    setFormData({
+      name: product.name,
+      description: product.description,
+      price: product.price.toString(),
+      stock_qty: product.stock_qty.toString(),
+      available_qty: product.available_qty.toString(),
+      image: product.image,
+      sku: product.sku,
+    });
+    setImageFile(null);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (productId: number) => {
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      try {
+        await deleteProduct(productId);
+        fetchProducts();
+      } catch (error) {
+        console.error("Failed to delete product:", error);
+      }
+    }
+  };
+
+  const openModal = () => {
+    setSelectedProduct(null);
+    setFormData({
+      name: "",
+      description: "",
+      price: "",
+      stock_qty: "",
+      available_qty: "",
+      image: "",
+      sku: "",
+    });
+    setImageFile(null);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const getImageUrl = (path: string) => {
+    if (!path) return "";
+    if (path.startsWith("http")) return path;
+    const baseUrl = apiClient.defaults.baseURL;
+    return `${baseUrl}${path}`;
+  };
 
   return (
-    <div>
-      <Helmet>
-        <title>Stock Management – AI Seller Assistant</title>
-        <meta name="description" content="Manage products, inventory and pricing." />
-        <link rel="canonical" href="/stock" />
-      </Helmet>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold text-white mb-4">Stock Management</h1>
+      <button
+        onClick={openModal}
+        className="bg-blue-500 text-white px-4 py-2 rounded mb-4"
+      >
+        Add Product
+      </button>
 
-      <h1 className="text-2xl md:text-3xl font-display font-semibold mb-6">Stock Management</h1>
-
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Add Product</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-5 gap-3">
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="name">Name</Label>
-                <Input id="name" placeholder="Product name" {...register("name")} />
-                {formState.errors.name && <p className="text-destructive text-sm">Name is required</p>}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <h3 className="text-lg font-bold">
+              {selectedProduct ? "Edit Product" : "Add Product"}
+            </h3>
+            <form onSubmit={handleSubmit} className="mt-4">
+              <div className="mt-2">
+                <label className="block text-sm font-medium text-gray-700">Product Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="Name"
+                  className="w-full p-2 border rounded"
+                  required
+                />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="price">Price</Label>
-                <Input id="price" type="number" step="0.01" placeholder="0.00" {...register("price")} />
+              <div className="mt-2">
+                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder="Description"
+                  className="w-full p-2 border rounded"
+                ></textarea>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="quantity">Quantity</Label>
-                <Input id="quantity" type="number" placeholder="0" {...register("quantity")} />
+              <div className="mt-2">
+                <label className="block text-sm font-medium text-gray-700">Price</label>
+                <input
+                  type="number"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleInputChange}
+                  onWheel={(e) => e.currentTarget.blur()}
+                  placeholder="Price"
+                  className="w-full p-2 border rounded"
+                  required
+                />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="image">Image</Label>
-                <Input id="image" type="file" accept="image/*" {...register("image")} />
+              <div className="mt-2">
+                <label className="block text-sm font-medium text-gray-700">Stock Quantity</label>
+                <input
+                  type="number"
+                  name="stock_qty"
+                  value={formData.stock_qty}
+                  onChange={handleInputChange}
+                  onWheel={(e) => e.currentTarget.blur()}
+                  placeholder="Stock Quantity"
+                  className="w-full p-2 border rounded"
+                  required
+                />
               </div>
-              <div className="flex items-end">
-                <Button type="submit" className="w-full">Add</Button>
+              {selectedProduct && (
+                <div className="mt-2">
+                  <label className="block text-sm font-medium text-gray-700">Available Quantity</label>
+                  <input
+                    type="number"
+                    name="available_qty"
+                    value={formData.available_qty}
+                    onChange={handleInputChange}
+                    onWheel={(e) => e.currentTarget.blur()}
+                    placeholder="Available Quantity"
+                    className="w-full p-2 border rounded"
+                    required
+                  />
+                </div>
+              )}
+              <div className="mt-2">
+                <label className="block text-sm font-medium text-gray-700">SKU</label>
+                <input
+                  type="text"
+                  name="sku"
+                  value={formData.sku}
+                  onChange={handleInputChange}
+                  placeholder="SKU"
+                  className="w-full p-2 border rounded"
+                  required
+                />
+              </div>
+              <div className="mt-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Image
+                </label>
+                <input
+                  type="file"
+                  onChange={handleFileChange}
+                  className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+              </div>
+              <div className="flex justify-end mt-4">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="bg-gray-500 text-white px-4 py-2 rounded mr-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                >
+                  Save
+                </button>
               </div>
             </form>
-          </CardContent>
-        </Card>
-
-        <div className="flex items-center gap-3 mb-3">
-          <Input placeholder="Search products..." value={query} onChange={(e) => setQuery(e.target.value)} className="max-w-xs" />
-          <Select value={filter} onValueChange={(v) => setFilter(v)}>
-            <SelectTrigger className="w-40"><SelectValue placeholder="Filter" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="low">Low stock</SelectItem>
-              <SelectItem value="oos">Out of stock</SelectItem>
-            </SelectContent>
-          </Select>
+          </div>
         </div>
+      )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Products</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableCaption>Manage your inventory</TableCaption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Quantity</TableHead>
-                  <TableHead>Image</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pageData.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="font-medium">{p.name}</TableCell>
-                    <TableCell>${p.price.toFixed(2)}</TableCell>
-                    <TableCell>{p.quantity}</TableCell>
-                    <TableCell>
-                      {p.image ? (
-                        <img src={p.image} alt={`${p.name} image`} className="h-10 w-10 object-cover rounded" loading="lazy" />
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-
-            <div className="flex justify-end gap-2 mt-4">
-              <Button variant="outline" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Prev</Button>
-              <div className="px-2 py-1 text-sm text-muted-foreground">Page {page} of {totalPages}</div>
-              <Button variant="outline" disabled={page >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Next</Button>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {products.map((product) => (
+          <div key={product.id} className="border p-4 rounded">
+            <img
+              src={getImageUrl(product.image)}
+              alt={product.name}
+              className="w-full h-48 object-cover rounded mb-2"
+            />
+            <h2 className="text-xl font-bold text-white">{product.name}</h2>
+            <p className="text-white">{product.description}</p>
+            <p className="font-bold mt-2 text-white">${product.price}</p>
+            <p className="text-white">Stock Quantity: {product.stock_qty}</p>
+            <p className="text-white">Available Quantity: {product.available_qty}</p>
+            <div className="flex justify-end mt-2">
+              <button
+                onClick={() => handleEdit(product)}
+                className="bg-yellow-500 text-white px-2 py-1 rounded mr-2"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => handleDelete(product.id)}
+                className="bg-red-500 text-white px-2 py-1 rounded"
+              >
+                Delete
+              </button>
             </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+          </div>
+        ))}
+      </div>
     </div>
   );
-}
+};
+
+export default Stock;

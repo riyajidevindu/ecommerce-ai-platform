@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+export const apiClient = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -89,6 +89,102 @@ export const logout = async () => {
     return response.data;
   } catch (error) {
     console.error('Error logging out:', error);
+    throw error;
+  }
+};
+
+// Stock Service
+export interface Product {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  stock_qty: number;
+  available_qty?: number;
+  image: string;
+  sku: string;
+}
+
+export const getProducts = async (): Promise<Product[]> => {
+  try {
+    const response = await apiClient.get<Product[]>('/api/v1/products/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    throw error;
+  }
+};
+
+export const createProduct = async (product: Omit<Product, 'id'>): Promise<Product> => {
+  try {
+    const response = await apiClient.post<Product>('/api/v1/products/', product);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating product:', error);
+    throw error;
+  }
+};
+
+export const updateProduct = async (id: number, product: Partial<Product>): Promise<Product> => {
+  try {
+    const response = await apiClient.put<Product>(`/api/v1/products/${id}`, product);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating product:', error);
+    throw error;
+  }
+};
+
+export const deleteProduct = async (id: number): Promise<void> => {
+  try {
+    await apiClient.delete(`/api/v1/products/${id}`);
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    throw error;
+  }
+};
+
+// File Storage Service
+export interface UploadResponse {
+  url: string;
+}
+
+export const uploadFile = async (file: File): Promise<UploadResponse> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  try {
+    const response = await apiClient.post<UploadResponse>('/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    throw error;
+  }
+};
+
+// AI Orchestrator Service
+export interface Message {
+  id: number;
+  customer_id: number;
+  user_message: string;
+  response_message: string | null;
+}
+
+export interface Conversation {
+  whatsapp_no: string;
+  first_message: string;
+  messages: Message[];
+}
+
+export const getConversations = async (): Promise<Conversation[]> => {
+  try {
+    const response = await apiClient.get<Conversation[]>('/api/v1/ai/conversations');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching conversations:', error);
     throw error;
   }
 };

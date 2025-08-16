@@ -8,6 +8,7 @@ from app.crud import session as session_crud
 from app.db.session import get_db
 from app.core.security import verify_password
 from app.core.oauth import oauth
+from app.messaging import publish_user_created
 
 router = APIRouter()
 
@@ -19,7 +20,9 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     db_user_by_username = user_crud.get_user_by_username_or_email(db, username=user.username)
     if db_user_by_username:
         raise HTTPException(status_code=400, detail="Username already registered")
-    return user_crud.create_user(db=db, user=user)
+    new_user = user_crud.create_user(db=db, user=user)
+    publish_user_created(user_data={"id": new_user.id, "username": new_user.username, "email": new_user.email})
+    return new_user
 
 @router.post("/login")
 def login_for_access_token(response: Response, request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):

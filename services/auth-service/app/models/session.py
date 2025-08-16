@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.models.user import Base
@@ -10,5 +10,6 @@ class Session(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     user_agent = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    is_active = Column(Boolean, default=True)
     
     user = relationship("User")
