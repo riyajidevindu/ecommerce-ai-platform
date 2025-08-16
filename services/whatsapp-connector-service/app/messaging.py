@@ -2,6 +2,7 @@ import pika
 import os
 import logging
 import json
+import time
 
 RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/%2F")
 logger = logging.getLogger(__name__)
@@ -112,28 +113,31 @@ def on_message_callback(ch, method, properties, body):
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
 def start_consumer():
-    try:
-        logger.info(f"Connecting to RabbitMQ at {RABBITMQ_URL}")
-        ch = get_rabbitmq_channel()
-        logger.info("Successfully connected to RabbitMQ.")
+    while True:
+        try:
+            logger.info(f"Connecting to RabbitMQ at {RABBITMQ_URL}")
+            ch = get_rabbitmq_channel()
+            logger.info("Successfully connected to RabbitMQ.")
 
-        exchanges = {
-            'ai_response_events': 'whatsapp_connector_ai_response_events',
-            'user_fanout_events': 'whatsapp_connector_user_events'
-        }
+            exchanges = {
+                'ai_response_events': 'whatsapp_connector_ai_response_events',
+                'user_fanout_events': 'whatsapp_connector_user_events'
+            }
 
-        for exchange_name, queue_name in exchanges.items():
-            ch.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
-            ch.queue_declare(queue=queue_name, durable=True)
-            ch.queue_bind(exchange=exchange_name, queue=queue_name)
-            ch.basic_consume(queue=queue_name, on_message_callback=on_message_callback)
-            logger.info(f"Consumer set up for exchange '{exchange_name}' on queue '{queue_name}'")
+            for exchange_name, queue_name in exchanges.items():
+                ch.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
+                ch.queue_declare(queue=queue_name, durable=True)
+                ch.queue_bind(exchange=exchange_name, queue=queue_name)
+                ch.basic_consume(queue=queue_name, on_message_callback=on_message_callback)
+                logger.info(f"Consumer set up for exchange '{exchange_name}' on queue '{queue_name}'")
 
-        logger.info(' [*] Waiting for messages. To exit press CTRL+C')
-        ch.start_consuming()
-    except pika.exceptions.AMQPConnectionError as e:
-        logger.error(f"Failed to connect to RabbitMQ: {e}")
-        global channel
-        channel = None
-    except Exception as e:
-        logger.error(f"An error occurred while consuming messages: {e}", exc_info=True)
+            logger.info(' [*] Waiting for messages. To exit press CTRL+C')
+            ch.start_consuming()
+        except pika.exceptions.AMQPConnectionError as e:
+            logger.error(f"Failed to connect to RabbitMQ: {e}. Retrying in 5 seconds...")
+            global channel
+            channel = None
+            time.sleep(5)
+        except Exception as e:
+            logger.error(f"An error occurred while consuming messages: {e}. Retrying in 5 seconds...", exc_info=True)
+            time.sleep(5)

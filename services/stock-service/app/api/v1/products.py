@@ -23,10 +23,10 @@ def create_product(product: product_schema.ProductCreate, db: Session = Depends(
         "sku": new_product.sku,
         "price": new_product.price,
         "description": new_product.description,
-        "image_url": new_product.image,
-        "availability_qty": new_product.available_qty,
+        "image": new_product.image,
+        "available_qty": new_product.available_qty,
         "stock_qty": new_product.stock_qty,
-        "user_id": new_product.owner_id
+        "owner_id": new_product.owner_id
     })
     return new_product
 
@@ -54,10 +54,10 @@ def update_product(product_id: int, product: product_schema.ProductCreate, db: S
         "sku": updated_product.sku,
         "price": updated_product.price,
         "description": updated_product.description,
-        "image_url": updated_product.image,
-        "availability_qty": updated_product.available_qty,
+        "image": updated_product.image,
+        "available_qty": updated_product.available_qty,
         "stock_qty": updated_product.stock_qty,
-        "user_id": updated_product.owner_id
+        "owner_id": updated_product.owner_id
     })
     return updated_product
 

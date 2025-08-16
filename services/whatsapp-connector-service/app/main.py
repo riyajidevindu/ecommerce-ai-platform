@@ -1,3 +1,4 @@
+import logging
 from fastapi import FastAPI
 from app.db.session import engine
 from app.db.base import Base
@@ -6,6 +7,9 @@ from app.api.v1 import users, whatsapp
 import threading
 from . import messaging
 from fastapi.middleware.cors import CORSMiddleware
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def init_db():
     Base.metadata.create_all(bind=engine)

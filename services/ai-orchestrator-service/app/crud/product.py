@@ -12,10 +12,20 @@ def get_products(db: Session, skip: int = 0, limit: int = 100):
     return db.query(Product).offset(skip).limit(limit).all()
 
 def get_products_by_user_id(db: Session, user_id: int):
-    return db.query(Product).filter(Product.user_id == user_id).all()
+    return db.query(Product).filter(Product.owner_id == user_id).all()
 
 def create_product(db: Session, product: ProductCreate):
-    db_product = Product(**product.dict())
+    db_product = Product(
+        id=product.id,
+        owner_id=product.owner_id,
+        name=product.name,
+        sku=product.sku,
+        price=product.price,
+        description=product.description,
+        image=product.image,
+        stock_qty=product.stock_qty,
+        available_qty=product.available_qty
+    )
     db.add(db_product)
     db.commit()
     db.refresh(db_product)

@@ -11,45 +11,36 @@ from app.schemas import user as user_schema
 RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/%2F")
 logger = logging.getLogger(__name__)
 
-# Global channel to be initialized on startup
-channel = None
-
-def get_rabbitmq_channel():
-    """
-    Returns a RabbitMQ channel, creating a new connection if one doesn't exist.
-    """
-    global channel
-    if channel is None or channel.is_closed:
-        connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_URL))
-        channel = connection.channel()
-    return channel
-
 def publish_event(exchange_name: str, event_type: str, data: dict):
     """
     Publishes an event to a specified exchange.
     """
+    connection = None
     try:
-        ch = get_rabbitmq_channel()
-        ch.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
+        connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_URL))
+        channel = connection.channel()
+        channel.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
         
         message = {
             "event_type": event_type,
             **data
         }
         
-        ch.basic_publish(
+        channel.basic_publish(
             exchange=exchange_name,
             routing_key='',
-            body=json.dumps(message),
+            body=json.dumps(message, default=str),  # Use default=str to handle non-serializable data
             properties=pika.BasicProperties(delivery_mode=2)
         )
-        logger.info(f" [x] Sent {event_type} event with data: {json.dumps(data)}")
+        logger.info(f" [x] Sent {event_type} event with data: {json.dumps(data, default=str)}")
     except pika.exceptions.AMQPConnectionError as e:
         logger.error(f"Failed to connect to RabbitMQ: {e}")
-        global channel
-        channel = None
     except Exception as e:
         logger.error(f"An error occurred while publishing event: {e}", exc_info=True)
+    finally:
+        if connection and connection.is_open:
+            connection.close()
+            logger.info("RabbitMQ connection closed.")
 
 def publish_product_created(product_data: dict):
     publish_event('product_events', 'product_created', {"product": product_data})
@@ -106,26 +97,30 @@ def start_consumer():
     Starts the RabbitMQ consumer to listen for user events.
     """
     while True:
+        connection = None
         try:
             logger.info(f"Consumer connecting to RabbitMQ at {RABBITMQ_URL}")
-            ch = get_rabbitmq_channel()
+            connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_URL))
+            channel = connection.channel()
             logger.info("Consumer successfully connected to RabbitMQ.")
 
             exchange_name = 'user_fanout_events'
             queue_name = 'stock_service_user_events'
 
-            ch.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
-            ch.queue_declare(queue=queue_name, durable=True)
-            ch.queue_bind(queue=queue_name, exchange=exchange_name)
-            ch.basic_consume(queue=queue_name, on_message_callback=on_message_callback)
+            channel.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
+            channel.queue_declare(queue=queue_name, durable=True)
+            channel.queue_bind(queue=queue_name, exchange=exchange_name)
+            channel.basic_consume(queue=queue_name, on_message_callback=on_message_callback)
 
             logger.info(' [*] Waiting for messages. To exit press CTRL+C')
-            ch.start_consuming()
+            channel.start_consuming()
         except pika.exceptions.AMQPConnectionError as e:
             logger.error(f"Consumer failed to connect to RabbitMQ: {e}. Retrying in 5 seconds...")
-            global channel
-            channel = None
+            if connection and connection.is_open:
+                connection.close()
             time.sleep(5)
         except Exception as e:
             logger.error(f"An error occurred in consumer: {e}. Retrying in 5 seconds...")
+            if connection and connection.is_open:
+                connection.close()
             time.sleep(5)
