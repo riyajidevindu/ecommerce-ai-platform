@@ -11,107 +11,95 @@ from app.schemas import user as user_schema
 RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/%2F")
 logger = logging.getLogger(__name__)
 
-def publish_product_created(product_data: dict):
+# Global channel to be initialized on startup
+channel = None
+
+def get_rabbitmq_channel():
     """
-    Publishes a message to the 'product_events' exchange when a product is created.
+    Returns a RabbitMQ channel, creating a new connection if one doesn't exist.
     """
-    try:
-        logger.info(f"Connecting to RabbitMQ at {RABBITMQ_URL}")
+    global channel
+    if channel is None or channel.is_closed:
         connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_URL))
         channel = connection.channel()
-        logger.info("Successfully connected to RabbitMQ.")
+    return channel
 
-        exchange_name = 'product_events'
-        
-        channel.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
+def publish_event(exchange_name: str, event_type: str, data: dict):
+    """
+    Publishes an event to a specified exchange.
+    """
+    try:
+        ch = get_rabbitmq_channel()
+        ch.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
         
         message = {
-            "event_type": "product_created",
-            "product": product_data
+            "event_type": event_type,
+            **data
         }
         
-        channel.basic_publish(
+        ch.basic_publish(
             exchange=exchange_name,
             routing_key='',
             body=json.dumps(message),
-            properties=pika.BasicProperties(
-                delivery_mode=2,  # make message persistent
-            ))
-        
-        logger.info(f" [x] Sent product.created:{json.dumps(message)}")
-        connection.close()
+            properties=pika.BasicProperties(delivery_mode=2)
+        )
+        logger.info(f" [x] Sent {event_type} event with data: {json.dumps(data)}")
     except pika.exceptions.AMQPConnectionError as e:
         logger.error(f"Failed to connect to RabbitMQ: {e}")
+        global channel
+        channel = None
     except Exception as e:
-        logger.error(f"An error occurred while publishing message: {e}")
+        logger.error(f"An error occurred while publishing event: {e}", exc_info=True)
+
+def publish_product_created(product_data: dict):
+    publish_event('product_events', 'product_created', {"product": product_data})
 
 def publish_product_updated(product_data: dict):
-    """
-    Publishes a message to the 'product_events' exchange when a product is updated.
-    """
-    try:
-        logger.info(f"Connecting to RabbitMQ at {RABBITMQ_URL}")
-        connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_URL))
-        channel = connection.channel()
-        logger.info("Successfully connected to RabbitMQ.")
-
-        exchange_name = 'product_events'
-        
-        channel.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
-        
-        message = {
-            "event_type": "product_updated",
-            "product": product_data
-        }
-        
-        channel.basic_publish(
-            exchange=exchange_name,
-            routing_key='',
-            body=json.dumps(message),
-            properties=pika.BasicProperties(
-                delivery_mode=2,  # make message persistent
-            ))
-        
-        logger.info(f" [x] Sent product.updated:{json.dumps(message)}")
-        connection.close()
-    except pika.exceptions.AMQPConnectionError as e:
-        logger.error(f"Failed to connect to RabbitMQ: {e}")
-    except Exception as e:
-        logger.error(f"An error occurred while publishing message: {e}")
+    publish_event('product_events', 'product_updated', {"product": product_data})
 
 def publish_product_deleted(product_id: int):
-    """
-    Publishes a message to the 'product_events' exchange when a product is deleted.
-    """
-    try:
-        logger.info(f"Connecting to RabbitMQ at {RABBITMQ_URL}")
-        connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_URL))
-        channel = connection.channel()
-        logger.info("Successfully connected to RabbitMQ.")
+    publish_event('product_events', 'product_deleted', {"product_id": product_id})
 
-        exchange_name = 'product_events'
-        
-        channel.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
-        
-        message = {
-            "event_type": "product_deleted",
-            "product_id": product_id
-        }
-        
-        channel.basic_publish(
-            exchange=exchange_name,
-            routing_key='',
-            body=json.dumps(message),
-            properties=pika.BasicProperties(
-                delivery_mode=2,  # make message persistent
-            ))
-        
-        logger.info(f" [x] Sent product.deleted:{json.dumps(message)}")
-        connection.close()
-    except pika.exceptions.AMQPConnectionError as e:
-        logger.error(f"Failed to connect to RabbitMQ: {e}")
+def _handle_user_created(data: dict):
+    user_data = data.get("user")
+    if not user_data:
+        logger.warning("No user data in user_created event")
+        return
+
+    db: Session = SessionLocal()
+    try:
+        logger.info(f"Creating user in stock_db: {user_data}")
+        user_create = user_schema.UserCreate(**user_data)
+        user_crud.create_user(db, user=user_create)
+        logger.info(f"User {user_data['username']} created in stock_db.")
+    finally:
+        db.close()
+
+EVENT_HANDLERS = {
+    "user_created": _handle_user_created,
+}
+
+def on_message_callback(ch, method, properties, body):
+    try:
+        logger.info(f"Received message: {body}")
+        data = json.loads(body)
+        event_type = data.get("event_type")
+
+        handler = EVENT_HANDLERS.get(event_type)
+        if handler:
+            handler(data)
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            logger.info(f"Successfully processed event: {event_type}")
+        else:
+            logger.warning(f"No handler for event type: {event_type}")
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to decode JSON message: {e}")
+        ch.basic_ack(delivery_tag=method.delivery_tag)
     except Exception as e:
-        logger.error(f"An error occurred while publishing message: {e}")
+        logger.error(f"An error occurred in message callback: {e}", exc_info=True)
+        ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
 def start_consumer():
     """
@@ -120,43 +108,23 @@ def start_consumer():
     while True:
         try:
             logger.info(f"Consumer connecting to RabbitMQ at {RABBITMQ_URL}")
-            connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_URL))
-            channel = connection.channel()
+            ch = get_rabbitmq_channel()
             logger.info("Consumer successfully connected to RabbitMQ.")
 
             exchange_name = 'user_fanout_events'
             queue_name = 'stock_service_user_events'
 
-            channel.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
-            channel.queue_declare(queue=queue_name, durable=True)
-            channel.queue_bind(queue=queue_name, exchange=exchange_name)
-
-            def callback(ch, method, properties, body):
-                logger.info(f" [x] Received {method.routing_key}:{body}")
-                data = json.loads(body)
-                
-                if data.get("event_type") == "user_created":
-                    user_data = data.get("user")
-                    if user_data:
-                        db: Session = SessionLocal()
-                        try:
-                            logger.info(f"Creating user in stock_db: {user_data}")
-                            user_create = user_schema.UserCreate(**user_data)
-                            user_crud.create_user(db, user=user_create)
-                            logger.info(f"User {user_data['username']} created in stock_db.")
-                        except Exception as e:
-                            logger.error(f"Failed to create user in stock_db: {e}")
-                        finally:
-                            db.close()
-                
-                ch.basic_ack(delivery_tag=method.delivery_tag)
-
-            channel.basic_consume(queue=queue_name, on_message_callback=callback)
+            ch.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
+            ch.queue_declare(queue=queue_name, durable=True)
+            ch.queue_bind(queue=queue_name, exchange=exchange_name)
+            ch.basic_consume(queue=queue_name, on_message_callback=on_message_callback)
 
             logger.info(' [*] Waiting for messages. To exit press CTRL+C')
-            channel.start_consuming()
+            ch.start_consuming()
         except pika.exceptions.AMQPConnectionError as e:
             logger.error(f"Consumer failed to connect to RabbitMQ: {e}. Retrying in 5 seconds...")
+            global channel
+            channel = None
             time.sleep(5)
         except Exception as e:
             logger.error(f"An error occurred in consumer: {e}. Retrying in 5 seconds...")

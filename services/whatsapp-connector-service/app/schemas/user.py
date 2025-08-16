@@ -1,13 +1,11 @@
 from pydantic import BaseModel
-from typing import Optional
 
 class UserBase(BaseModel):
-    id: int
-    name: str
-    whatsapp_no: Optional[str] = None
+    name: str | None = None
+    whatsapp_no: str | None = None
 
 class UserCreate(UserBase):
-    pass
+    id: int
 
 class User(UserBase):
     id: int

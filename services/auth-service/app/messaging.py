@@ -6,37 +6,45 @@ import logging
 RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/%2F")
 logger = logging.getLogger(__name__)
 
-def publish_user_created(user_data: dict):
+# Global channel to be initialized on startup
+channel = None
+
+def get_rabbitmq_channel():
     """
-    Publishes a message to the 'user_events' exchange when a user is created.
+    Returns a RabbitMQ channel, creating a new connection if one doesn't exist.
     """
-    try:
-        logger.info(f"Connecting to RabbitMQ at {RABBITMQ_URL}")
+    global channel
+    if channel is None or channel.is_closed:
         connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_URL))
         channel = connection.channel()
-        logger.info("Successfully connected to RabbitMQ.")
+    return channel
 
+def publish_user_created(user_data: dict):
+    """
+    Publishes a message to the 'user_fanout_events' exchange when a user is created.
+    """
+    try:
+        ch = get_rabbitmq_channel()
         exchange_name = 'user_fanout_events'
-        routing_key = 'user.created'
         
-        channel.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
+        ch.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
         
         message = {
             "event_type": "user_created",
             "user": user_data
         }
         
-        channel.basic_publish(
+        ch.basic_publish(
             exchange=exchange_name,
             routing_key='',
             body=json.dumps(message),
-            properties=pika.BasicProperties(
-                delivery_mode=2,  # make message persistent
-            ))
+            properties=pika.BasicProperties(delivery_mode=2)
+        )
         
-        logger.info(f" [x] Sent {routing_key}:{json.dumps(message)}")
-        connection.close()
+        logger.info(f" [x] Sent user_created event for user: {user_data.get('username')}")
     except pika.exceptions.AMQPConnectionError as e:
         logger.error(f"Failed to connect to RabbitMQ: {e}")
+        global channel
+        channel = None  # Reset channel on connection error
     except Exception as e:
-        logger.error(f"An error occurred while publishing message: {e}")
+        logger.error(f"An error occurred while publishing message: {e}", exc_info=True)

@@ -3,7 +3,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { NavLink, useNavigate } from "react-router-dom";
-import { login } from "@/services/api";
 import { notifications } from "@mantine/notifications";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -30,7 +29,7 @@ type FormValues = z.infer<typeof schema>;
 
 export default function Login() {
   const navigate = useNavigate();
-  const { checkUser } = useAuth();
+  const { login } = useAuth();
   const { register, handleSubmit, formState } = useForm<FormValues>({
     resolver: zodResolver(schema),
   });
@@ -38,7 +37,6 @@ export default function Login() {
   const onSubmit = async (data: FormValues) => {
     try {
       await login(data.email, data.password);
-      await checkUser();
       notifications.show({
         title: <Text size="lg">Login Successful</Text>,
         message: <Text size="md">Welcome back!</Text>,

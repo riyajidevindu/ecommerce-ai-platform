@@ -4,12 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Bell, LogIn, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { logout } from "@/services/api";
 import { notifications } from "@mantine/notifications";
 import { Text } from "@mantine/core";
 
 const Navbar = () => {
-  const { isAuthenticated, checkUser } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const showSearchBar = [
@@ -21,7 +20,6 @@ const Navbar = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      await checkUser();
       notifications.show({
         title: <Text size="lg">Logout Successful</Text>,
         message: <Text size="md">You have been logged out.</Text>,

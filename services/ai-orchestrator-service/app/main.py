@@ -36,18 +36,6 @@ async def startup_event():
     consumer_thread = threading.Thread(target=messaging.start_consumer, daemon=True)
     consumer_thread.start()
 
-@app.post("/api/v1/process-messages")
-async def process_new_messages(db: Session = Depends(get_db)):
-    """
-    Processes messages that have not yet been responded to.
-    """
-    new_messages = get_unprocessed_messages(db)
-    
-    for msg in new_messages:
-        message_processor.process_message(msg, db)
-        
-    return {"status": "ok", "processed_messages": len(new_messages)}
-
 @app.get("/api/v1/ai/conversations", response_model=List[Conversation])
 async def get_conversations_endpoint(db: Session = Depends(get_db)):
     """

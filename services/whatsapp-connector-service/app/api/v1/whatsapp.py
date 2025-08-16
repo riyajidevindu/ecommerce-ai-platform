@@ -7,11 +7,10 @@ from app.crud import user as user_crud
 from app.schemas import user as user_schema
 from app.schemas.customer import CustomerCreate
 from app.schemas.message import MessageCreate
+from app import messaging
 import requests
 
 router = APIRouter()
-
-AI_ORCHESTRATOR_URL = "http://localhost:8010/api/v1/process-messages"
 
 @router.post("/webhook")
 async def whatsapp_webhook(request: dict, db: Session = Depends(get_db)):
@@ -38,11 +37,14 @@ async def whatsapp_webhook(request: dict, db: Session = Depends(get_db)):
     # Create the message
     message = message_crud.create_message(db, message=MessageCreate(customer_id=customer.id, message=user_message))
 
-    # Trigger the AI orchestrator
-    try:
-        response = requests.post(AI_ORCHESTRATOR_URL)
-        response.raise_for_status()
-    except requests.exceptions.RequestException as e:
-        raise HTTPException(status_code=500, detail=f"Failed to trigger AI orchestrator: {e}")
+    # Trigger the AI orchestrator by publishing a message to RabbitMQ
+    message_data = {
+        "id": message.id,
+        "customer_id": customer.id,
+        "whatsapp_no": customer.whatsapp_no,
+        "user_id": user.id,
+        "user_message": message.message
+    }
+    messaging.publish_message(message_data)
 
     return {"status": "ok", "message_id": message.id}

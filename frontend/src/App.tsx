@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import ForgotPassword from "./pages/auth/ForgotPassword";
+import OAuthCallback from "./pages/auth/OAuthCallback";
 import WhatsApp from "./pages/WhatsApp";
 import Stock from "./pages/Stock";
 import AIChat from "./pages/AIChat";
@@ -48,6 +49,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/auth/oauth-callback" element={<OAuthCallback />} />
               {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
             </Routes>
