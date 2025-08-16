@@ -13,10 +13,10 @@ AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://auth-service:8000")
 logger = logging.getLogger(__name__)
 
 async def get_current_user(request: Request, db: Session = Depends(get_db)):
-    session_id = request.cookies.get("session_id")
-    logger.info(f"Attempting to authenticate with session_id: {session_id}")
-    if session_id is None:
-        logger.error("No session_id cookie found in request.")
+    auth_header = request.headers.get("Authorization")
+    logger.info(f"Attempting to authenticate with Authorization header: {auth_header}")
+    if auth_header is None:
+        logger.error("No Authorization header found in request.")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
@@ -24,9 +24,11 @@ async def get_current_user(request: Request, db: Session = Depends(get_db)):
 
     async with httpx.AsyncClient() as client:
         try:
-            logger.info(f"Validating session_id with auth service at {AUTH_SERVICE_URL}")
-            response = await client.post(
-                f"{AUTH_SERVICE_URL}/api/v1/users/validate_session?session_id={session_id}",
+            logger.info(f"Validating token with auth service at {AUTH_SERVICE_URL}")
+            headers = {"Authorization": auth_header}
+            response = await client.get(
+                f"{AUTH_SERVICE_URL}/api/v1/users/me",
+                headers=headers,
             )
             logger.info(f"Auth service response status: {response.status_code}")
             response.raise_for_status()
