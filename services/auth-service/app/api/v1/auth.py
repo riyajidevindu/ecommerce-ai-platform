@@ -5,7 +5,7 @@ from app.schemas.user import User, UserCreate
 from app.schemas.token import Token
 from app.crud import user as user_crud
 from app.db.session import get_db
-from app.core.security import verify_password, create_access_token, create_refresh_token, get_current_user_from_refresh_token, revoke_refresh_token, revoke_access_token, oauth2_scheme
+from app.core.security import verify_password, create_access_token, create_refresh_token, get_current_user_from_refresh_token, revoke_refresh_tokens_for_user, revoke_access_token, oauth2_scheme, get_current_user
 from app.core.oauth import oauth
 from app.messaging import publish_user_created
 
@@ -53,10 +53,8 @@ def refresh_access_token(request: Request, db: Session = Depends(get_db)):
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/logout")
-def logout(response: Response, request: Request, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
-    refresh_token = request.cookies.get("refresh_token")
-    if refresh_token:
-        revoke_refresh_token(db=db, token=refresh_token)
+def logout(response: Response, db: Session = Depends(get_db), current_user: User = Depends(get_current_user), token: str = Depends(oauth2_scheme)):
+    revoke_refresh_tokens_for_user(db=db, user_id=current_user.id)
     revoke_access_token(db=db, token=token)
     response.delete_cookie(key="refresh_token")
     return {"message": "Logout successful"}

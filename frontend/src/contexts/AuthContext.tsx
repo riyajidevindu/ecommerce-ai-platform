@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
-import { login as apiLogin, logout as apiLogout, setAuthToken, getCurrentUser } from '@/services/api';
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { login as apiLogin, logout as apiLogout, setAuthToken, getCurrentUser, apiClient } from '@/services/api';
 
 interface User {
   username: string;
@@ -28,7 +28,26 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Set initial loading to true
+
+  useEffect(() => {
+    const rehydrateSession = async () => {
+      try {
+        const response = await apiClient.post<{ access_token: string }>('/api/v1/auth/refresh');
+        const { access_token } = response.data;
+        setAuthToken(access_token);
+        const currentUser = await getCurrentUser();
+        setUser(currentUser);
+      } catch (error) {
+        setUser(null);
+        setAuthToken('');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    rehydrateSession();
+  }, []);
 
   const login = async (username, password) => {
     setIsLoading(true);
@@ -61,7 +80,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout }}>
-      {children}
+      {!isLoading && children}
     </AuthContext.Provider>
   );
 };

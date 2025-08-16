@@ -78,8 +78,8 @@ def get_current_user_from_refresh_token(token: str, db: Session):
         raise credentials_exception
     return user
 
-def revoke_refresh_token(db: Session, token: str):
-    refresh_token_crud.revoke_refresh_token(db, token=token)
+def revoke_refresh_tokens_for_user(db: Session, user_id: int):
+    refresh_token_crud.revoke_all_refresh_tokens_for_user(db, user_id=user_id)
 
 def revoke_access_token(db: Session, token: str):
     try:
