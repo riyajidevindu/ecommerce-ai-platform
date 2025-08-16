@@ -1,5 +1,11 @@
 import axios from 'axios';
 
+let accessToken = '';
+
+export const setAuthToken = (token: string) => {
+  accessToken = token;
+};
+
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost',
   headers: {
@@ -7,6 +13,42 @@ export const apiClient = axios.create({
   },
   withCredentials: true,
 });
+
+apiClient.interceptors.request.use(
+  (config) => {
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response.status === 401 && !originalRequest._retry && originalRequest.url !== '/api/v1/auth/refresh') {
+      originalRequest._retry = true;
+      try {
+        const response = await apiClient.post<{ access_token: string }>('/api/v1/auth/refresh');
+        const { access_token } = response.data;
+        setAuthToken(access_token);
+        originalRequest.headers.Authorization = `Bearer ${access_token}`;
+        return apiClient(originalRequest);
+      } catch (refreshError) {
+        // Handle failed refresh here (e.g., redirect to login)
+        console.error('Session expired. Please log in again.');
+        // Optionally, you can trigger a logout action here
+        // For example: window.location.href = '/login';
+        return Promise.reject(refreshError);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const getHealth = async (service: string) => {
   try {

@@ -36,7 +36,7 @@ def login_for_access_token(response: Response, form_data: OAuth2PasswordRequestF
         )
     access_token = create_access_token(data={"sub": user.username})
     refresh_token = create_refresh_token(db=db, user_id=user.id)
-    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True)
+    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, samesite="lax")
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/refresh", response_model=Token)
@@ -84,5 +84,5 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
     refresh_token = create_refresh_token(db=db, user_id=user.id)
     
     response = RedirectResponse(url=f"{os.getenv('FRONTEND_URL')}/dashboard?access_token={access_token}")
-    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True)
+    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, samesite="lax")
     return response
