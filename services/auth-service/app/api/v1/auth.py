@@ -81,6 +81,6 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
     access_token = create_access_token(data={"sub": user.username})
     refresh_token = create_refresh_token(db=db, user_id=user.id)
     
-    response = RedirectResponse(url=f"{os.getenv('FRONTEND_URL')}/dashboard?access_token={access_token}")
+    response = RedirectResponse(url=f"{os.getenv('FRONTEND_URL')}/auth/oauth-callback?access_token={access_token}")
     response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, samesite="lax")
     return response

@@ -14,6 +14,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (username, password) => Promise<void>;
   logout: () => Promise<void>;
+  loginWithToken: (token: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -22,6 +23,7 @@ const AuthContext = createContext<AuthContextType>({
   isLoading: false,
   login: async () => {},
   logout: async () => {},
+  loginWithToken: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -78,8 +80,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const loginWithToken = async (token: string) => {
+    setIsLoading(true);
+    try {
+      setAuthToken(token);
+      const currentUser = await getCurrentUser();
+      setUser(currentUser);
+    } catch (error) {
+      setUser(null);
+      setAuthToken('');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, loginWithToken }}>
       {!isLoading && children}
     </AuthContext.Provider>
   );

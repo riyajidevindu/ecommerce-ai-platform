@@ -4,8 +4,10 @@ class UserBase(BaseModel):
     username: str
     email: str
 
+from typing import Optional
+
 class UserCreate(UserBase):
-    password: str
+    password: Optional[str] = None
 
 class User(UserBase):
     id: int
