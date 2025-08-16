@@ -77,6 +77,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
     if not user:
         # Create a new user with a random, unusable password
         user = user_crud.create_user(db, user=UserCreate(username=user_info['name'], email=user_info['email'], password=None), auth_provider="google")
+        publish_user_created(user_data={"id": user.id, "username": user.username, "email": user.email})
 
     access_token = create_access_token(data={"sub": user.username})
     refresh_token = create_refresh_token(db=db, user_id=user.id)
