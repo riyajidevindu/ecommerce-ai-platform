@@ -28,7 +28,7 @@ export default function Notifications() {
         <link rel="canonical" href="/notifications" />
       </Helmet>
 
-      <h1 className="text-2xl md:text-3xl font-display font-semibold mb-6">Notifications</h1>
+      <h1 className="text-2xl md:text-3xl font-display font-semibold mb-6 text-foreground">Notifications</h1>
 
       <div className="flex items-center gap-3 mb-4">
         <Select value={status} onValueChange={setStatus}>

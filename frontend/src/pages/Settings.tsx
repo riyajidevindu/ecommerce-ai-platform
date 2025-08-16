@@ -15,7 +15,7 @@ export default function Settings() {
         <link rel="canonical" href="/settings" />
       </Helmet>
 
-      <h1 className="text-2xl md:text-3xl font-display font-semibold mb-6">Settings</h1>
+      <h1 className="text-2xl md:text-3xl font-display font-semibold mb-6 text-foreground">Settings</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>

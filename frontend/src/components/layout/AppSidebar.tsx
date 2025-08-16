@@ -41,14 +41,14 @@ export default function AppSidebar() {
     <Sidebar className={collapsed ? "w-14" : "w-60"} collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-xl">Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end className={(nav) => getNavCls(nav)}>
-                      <item.icon className="mr-2 h-4 w-4" />
+                    <NavLink to={item.url} end className={(nav) => `${getNavCls(nav)} text-lg py-2`}>
+                      <item.icon className="mr-3 h-6 w-6" />
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
