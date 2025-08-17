@@ -233,3 +233,29 @@ export const getConversations = async (): Promise<Conversation[]> => {
     throw error;
   }
 };
+
+// WhatsApp Service
+export interface WhatsAppUser {
+  user_id: number;
+  whatsapp_no: string;
+}
+
+export const getWhatsAppUser = async (userId: number): Promise<WhatsAppUser> => {
+  try {
+    const response = await apiClient.get<WhatsAppUser>(`/api/v1/whatsapp/user/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching WhatsApp user:', error);
+    throw error;
+  }
+};
+
+export const createOrUpdateWhatsAppUser = async (userId: number, whatsappNo: string): Promise<WhatsAppUser> => {
+  try {
+    const response = await apiClient.post<WhatsAppUser>(`/api/v1/whatsapp/user/${userId}`, { whatsapp_no: whatsappNo });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating/updating WhatsApp user:', error);
+    throw error;
+  }
+};

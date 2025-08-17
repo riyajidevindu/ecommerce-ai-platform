@@ -4,13 +4,26 @@ from app.db.session import get_db
 from app.crud import customer as customer_crud
 from app.crud import message as message_crud
 from app.crud import user as user_crud
+from app.crud import whatsapp as whatsapp_crud
 from app.schemas import user as user_schema
 from app.schemas.customer import CustomerCreate
 from app.schemas.message import MessageCreate
+from app.schemas.whatsapp import WhatsAppUser, WhatsAppUserCreate
 from app import messaging
 import requests
 
 router = APIRouter()
+
+@router.get("/user/{user_id}", response_model=WhatsAppUser)
+def get_whatsapp_user(user_id: int, db: Session = Depends(get_db)):
+    db_user = whatsapp_crud.get_whatsapp_user(db, user_id=user_id)
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return db_user
+
+@router.post("/user/{user_id}", response_model=WhatsAppUser)
+def create_or_update_whatsapp_user(user_id: int, whatsapp_user: WhatsAppUserCreate, db: Session = Depends(get_db)):
+    return whatsapp_crud.create_or_update_whatsapp_user(db=db, user_id=user_id, whatsapp_user=whatsapp_user)
 
 @router.post("/webhook")
 async def whatsapp_webhook(request: dict, db: Session = Depends(get_db)):
