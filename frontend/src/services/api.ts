@@ -30,7 +30,10 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response.status === 401 && !originalRequest._retry && originalRequest.url !== '/api/v1/auth/refresh') {
+    if (error.response.status === 401 && !originalRequest._retry) {
+      if (originalRequest.url === '/api/v1/auth/refresh') {
+        return Promise.reject(error); // Don't retry refresh token requests
+      }
       originalRequest._retry = true;
       try {
         const response = await apiClient.post<{ access_token: string }>('/api/v1/auth/refresh');
