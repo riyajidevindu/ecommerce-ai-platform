@@ -3,6 +3,8 @@ import os
 import logging
 import json
 import time
+from typing import Optional
+from app.clients.whatsapp_client import send_text_message
 
 RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/%2F")
 logger = logging.getLogger(__name__)
@@ -60,10 +62,23 @@ def _handle_ai_response_ready(data: dict):
 
     from app.db.session import SessionLocal
     from app.crud import message as message_crud
+    from app.models.message import Message as DBMessage
     db = SessionLocal()
     try:
-        message_crud.update_message_response(db, message_id, ai_response)
+        db_message: Optional[DBMessage] = message_crud.update_message_response(db, message_id, ai_response)
         logger.info(f"Updated message {message_id} with AI response.")
+
+        # Attempt to send the response back to the customer's WhatsApp number
+        if db_message and db_message.customer and db_message.customer.whatsapp_no:
+            to_number = db_message.customer.whatsapp_no
+            try:
+                send_text_message(to_number, ai_response)
+                message_crud.mark_message_sent_to_customer(db, message_id)
+                logger.info("Sent WhatsApp reply for message %s to %s", message_id, to_number)
+            except Exception as send_err:
+                logger.error("Failed to send WhatsApp reply for message %s: %s", message_id, send_err, exc_info=True)
+        else:
+            logger.warning("Cannot send WhatsApp reply for message %s: missing customer/whatsapp_no", message_id)
     finally:
         db.close()
 

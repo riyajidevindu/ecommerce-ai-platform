@@ -8,5 +8,6 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=False)
     name = Column(String, index=True)
     whatsapp_no = Column(String, nullable=True)
+    phone_number_id = Column(String, nullable=True, index=True)
 
     customers = relationship("Customer", back_populates="user")
