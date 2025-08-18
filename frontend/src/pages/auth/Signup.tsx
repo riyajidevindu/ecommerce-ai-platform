@@ -87,7 +87,7 @@ export default function Signup() {
           ta="center"
           style={(theme) => ({
             fontFamily: `Greycliff CF, ${theme.fontFamily}`,
-            color: theme.white,
+            color: theme.black,
           })}
         >
           Create an account

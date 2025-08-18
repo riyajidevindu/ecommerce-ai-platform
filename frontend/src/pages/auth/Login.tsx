@@ -85,7 +85,7 @@ export default function Login() {
           ta="center"
           style={(theme) => ({
             fontFamily: `Greycliff CF, ${theme.fontFamily}`,
-            color: theme.white,
+            color: theme.black
           })}
         >
           Welcome back!

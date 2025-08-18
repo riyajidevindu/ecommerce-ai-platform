@@ -39,16 +39,20 @@ export default function AppSidebar() {
 
   return (
     <Sidebar className={collapsed ? "w-14" : "w-60"} collapsible="icon">
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xl">Navigation</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
+      <SidebarContent className="h-full flex flex-col">
+        <SidebarGroup className="flex-1 flex flex-col">
+          <SidebarGroupLabel className="text-3xl mb-6">Navigation</SidebarGroupLabel>
+          <SidebarGroupContent className="flex-1 flex flex-col justify-between">
+            <SidebarMenu className="flex-1 flex flex-col gap-4">
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end className={(nav) => `${getNavCls(nav)} text-lg py-2`}>
-                      <item.icon className="mr-3 h-6 w-6" />
+                    <NavLink
+                      to={item.url}
+                      end
+                      className={(nav) => `${getNavCls(nav)} text-[1.2rem] py-6 min-h-[64px] flex items-center`}
+                    >
+                      <item.icon className="mr-4 h-20 w-20" />
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>

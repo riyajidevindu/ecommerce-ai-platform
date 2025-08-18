@@ -36,7 +36,7 @@ const AIChat = () => {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">AI Conversations</h1>
+      <h1 className="text-2xl font-bold mb-4 text-foreground">AI Conversations</h1>
       <Accordion type="single" collapsible className="w-full">
         {conversations.map((conversation) => (
           <AccordionItem key={conversation.whatsapp_no} value={conversation.whatsapp_no}>
