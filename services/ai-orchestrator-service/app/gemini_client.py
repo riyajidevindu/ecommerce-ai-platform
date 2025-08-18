@@ -12,7 +12,7 @@ model = None
 if _gemini_available and GEMINI_API_KEY:
     try:
         genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-2.5-pro')
+        model = genai.GenerativeModel('gemini-1.5-flash-latest')
     except Exception:
         _gemini_available = False
 
@@ -46,5 +46,8 @@ def generate_response(prompt: str) -> str:
     """
     if not model:
         return "[Gemini unavailable: missing dependency or API key]"
-    response = model.generate_content(prompt)
-    return getattr(response, 'text', str(response))
+    try:
+        response = model.generate_content(prompt)
+        return getattr(response, 'text', str(response))
+    except Exception as e:
+        return f"[Gemini error: {e}]"

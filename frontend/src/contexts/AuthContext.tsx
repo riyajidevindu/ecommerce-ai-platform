@@ -32,6 +32,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true); // Set initial loading to true
 
+  const getCookie = (name: string) => {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+  };
+
   useEffect(() => {
     const rehydrateSession = async () => {
       try {
@@ -41,6 +47,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const currentUser = await getCurrentUser();
         setUser(currentUser);
       } catch (error) {
+        // This is expected if the user doesn't have a valid refresh token
         setUser(null);
         setAuthToken('');
       } finally {

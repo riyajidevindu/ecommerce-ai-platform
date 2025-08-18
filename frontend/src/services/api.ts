@@ -30,7 +30,10 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response.status === 401 && !originalRequest._retry && originalRequest.url !== '/api/v1/auth/refresh') {
+    if (error.response.status === 401 && !originalRequest._retry) {
+      if (originalRequest.url === '/api/v1/auth/refresh') {
+        return Promise.reject(error); // Don't retry refresh token requests
+      }
       originalRequest._retry = true;
       try {
         const response = await apiClient.post<{ access_token: string }>('/api/v1/auth/refresh');
@@ -227,6 +230,32 @@ export const getConversations = async (): Promise<Conversation[]> => {
     return response.data;
   } catch (error) {
     console.error('Error fetching conversations:', error);
+    throw error;
+  }
+};
+
+// WhatsApp Service
+export interface WhatsAppUser {
+  user_id: number;
+  whatsapp_no: string;
+}
+
+export const getWhatsAppUser = async (userId: number): Promise<WhatsAppUser> => {
+  try {
+    const response = await apiClient.get<WhatsAppUser>(`/api/v1/whatsapp/user/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching WhatsApp user:', error);
+    throw error;
+  }
+};
+
+export const createOrUpdateWhatsAppUser = async (userId: number, whatsappNo: string): Promise<WhatsAppUser> => {
+  try {
+    const response = await apiClient.post<WhatsAppUser>(`/api/v1/whatsapp/user/${userId}`, { whatsapp_no: whatsappNo });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating/updating WhatsApp user:', error);
     throw error;
   }
 };

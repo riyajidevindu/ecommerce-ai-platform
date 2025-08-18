@@ -48,16 +48,16 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
+        email: str = payload.get("sub")
         jti: str = payload.get("jti")
-        if username is None or jti is None:
+        if email is None or jti is None:
             raise credentials_exception
         if revoked_token_crud.is_token_revoked(db, jti=jti):
             raise credentials_exception
-        token_data = TokenData(username=username)
+        token_data = TokenData(email=email)
     except JWTError:
         raise credentials_exception
-    user = user_crud.get_user_by_username_or_email(db, username=token_data.username)
+    user = user_crud.get_user_by_email(db, email=token_data.email)
     if user is None:
         raise credentials_exception
     return user

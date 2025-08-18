@@ -2,6 +2,7 @@ import pika
 import json
 import os
 import logging
+import time
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.crud import user as user_crud
@@ -67,17 +68,29 @@ def _handle_product_created(data: dict):
 
     db: Session = SessionLocal()
     try:
-        user_id = product_data.get("user_id")
-        if user_id and not user_crud.get_user(db, user_id=user_id):
-            user_crud.create_user(db, user=UserCreate(id=user_id, name="Unknown"))
-            logger.warning(f"User with ID {user_id} not found, created a placeholder user.")
+        owner_id = product_data.get("owner_id")
+        if owner_id and not user_crud.get_user(db, user_id=owner_id):
+            user_crud.create_user(db, user=UserCreate(id=owner_id, name="Unknown"))
+            logger.warning(f"User with ID {owner_id} not found, created a placeholder user.")
 
         if not product_crud.get_product(db, product_id=product_data["id"]):
-            product = ProductCreate(**product_data)
+            product = ProductCreate(
+                id=product_data["id"],
+                name=product_data["name"],
+                sku=product_data["sku"],
+                price=product_data["price"],
+                description=product_data.get("description"),
+                image=product_data.get("image"),
+                available_qty=product_data.get("available_qty"),
+                stock_qty=product_data.get("stock_qty"),
+                owner_id=product_data["owner_id"]
+            )
             product_crud.create_product(db, product=product)
             logger.info(f"Product {product_data['name']} created in ai-orchestrator-service.")
         else:
             logger.info(f"Product {product_data['name']} already exists in ai-orchestrator-service.")
+    except Exception as e:
+        logger.error(f"An error occurred while handling product created event: {e}", exc_info=True)
     finally:
         db.close()
 
@@ -89,9 +102,21 @@ def _handle_product_updated(data: dict):
 
     db: Session = SessionLocal()
     try:
-        product = ProductCreate(**product_data)
+        product = ProductCreate(
+            id=product_data["id"],
+            name=product_data["name"],
+            sku=product_data["sku"],
+            price=product_data["price"],
+            description=product_data.get("description"),
+            image=product_data.get("image"),
+            available_qty=product_data.get("available_qty"),
+            stock_qty=product_data.get("stock_qty"),
+            owner_id=product_data["owner_id"]
+        )
         product_crud.update_product(db, product_id=product_data["id"], product=product)
         logger.info(f"Product {product_data['name']} updated in ai-orchestrator-service.")
+    except Exception as e:
+        logger.error(f"An error occurred while handling product updated event: {e}", exc_info=True)
     finally:
         db.close()
 
@@ -168,28 +193,31 @@ def on_message_callback(ch, method, properties, body):
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False) # Requeue=False to avoid poison messages
 
 def start_consumer():
-    try:
-        logger.info(f"Connecting to RabbitMQ at {RABBITMQ_URL}")
-        connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_URL))
-        channel = connection.channel()
-        logger.info("Successfully connected to RabbitMQ.")
+    while True:
+        try:
+            logger.info(f"Connecting to RabbitMQ at {RABBITMQ_URL}")
+            connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_URL))
+            channel = connection.channel()
+            logger.info("Successfully connected to RabbitMQ.")
 
-        exchanges = {
-            'user_fanout_events': 'ai_orchestrator_user_events',
-            'product_events': 'ai_orchestrator_product_events',
-            'new_message_events': 'ai_orchestrator_new_message_events'
-        }
+            exchanges = {
+                'user_fanout_events': 'ai_orchestrator_user_events',
+                'product_events': 'ai_orchestrator_product_events',
+                'new_message_events': 'ai_orchestrator_new_message_events'
+            }
 
-        for exchange_name, queue_name in exchanges.items():
-            channel.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
-            channel.queue_declare(queue=queue_name, durable=True)
-            channel.queue_bind(exchange=exchange_name, queue=queue_name)
-            channel.basic_consume(queue=queue_name, on_message_callback=on_message_callback)
-            logger.info(f"Consumer set up for exchange '{exchange_name}' on queue '{queue_name}'")
+            for exchange_name, queue_name in exchanges.items():
+                channel.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
+                channel.queue_declare(queue=queue_name, durable=True)
+                channel.queue_bind(exchange=exchange_name, queue=queue_name)
+                channel.basic_consume(queue=queue_name, on_message_callback=on_message_callback)
+                logger.info(f"Consumer set up for exchange '{exchange_name}' on queue '{queue_name}'")
 
-        logger.info(' [*] Waiting for messages. To exit press CTRL+C')
-        channel.start_consuming()
-    except pika.exceptions.AMQPConnectionError as e:
-        logger.error(f"Failed to connect to RabbitMQ: {e}")
-    except Exception as e:
-        logger.error(f"An error occurred while consuming messages: {e}", exc_info=True)
+            logger.info(' [*] Waiting for messages. To exit press CTRL+C')
+            channel.start_consuming()
+        except pika.exceptions.AMQPConnectionError as e:
+            logger.error(f"Failed to connect to RabbitMQ: {e}. Retrying in 5 seconds...")
+            time.sleep(5)
+        except Exception as e:
+            logger.error(f"An error occurred while consuming messages: {e}. Retrying in 5 seconds...", exc_info=True)
+            time.sleep(5)

@@ -9,4 +9,4 @@ class User(Base):
     name = Column(String, index=True)
 
     customers = relationship("Customer", back_populates="user")
-    products = relationship("Product", back_populates="user")
+    products = relationship("Product", back_populates="owner")

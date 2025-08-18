@@ -7,36 +7,35 @@ import { notifications } from "@mantine/notifications";
 import { Text } from "@mantine/core";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { apiClient } from "@/services/api";
+import { getWhatsAppUser, createOrUpdateWhatsAppUser, getCurrentUser } from "@/services/api";
 import { useTheme } from "next-themes";
-
-interface User {
-  id: number;
-  name: string;
-  whatsapp_no: string | null;
-}
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function WhatsApp() {
   const { theme } = useTheme();
-  const [user, setUser] = useState<User | null>(null);
   const [whatsappNo, setWhatsappNo] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const meResponse = await apiClient.get<User>("/api/v1/users/me");
-        const userResponse = await apiClient.get<User>(`/api/v1/whatsapp/users/${meResponse.data.id}`);
-        setUser(userResponse.data);
-        setWhatsappNo(userResponse.data.whatsapp_no || "");
+        const meResponse = await getCurrentUser();
+        setUserId(meResponse.id);
+        const whatsappUser = await getWhatsAppUser(meResponse.id);
+        setWhatsappNo(whatsappUser.whatsapp_no || "");
       } catch (error) {
-        console.error("Failed to fetch user data:", error);
+        setError("Failed to fetch user data.");
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchUserData();
   }, []);
 
   const handleSave = async () => {
-    if (user) {
+    if (userId) {
       const phoneRegex = /^\+[1-9]\d{1,14}$/;
       if (!phoneRegex.test(whatsappNo)) {
         notifications.show({
@@ -47,23 +46,18 @@ export default function WhatsApp() {
         return;
       }
 
+      setIsLoading(true);
       try {
-        await apiClient.put(`/api/v1/whatsapp/users/${user.id}?whatsapp_no=${whatsappNo}`);
-        const userResponse = await apiClient.get<User>(`/api/v1/whatsapp/users/${user.id}`);
-        setUser(userResponse.data);
-        setWhatsappNo(userResponse.data.whatsapp_no || "");
+        await createOrUpdateWhatsAppUser(userId, whatsappNo);
         notifications.show({
           title: <Text size="lg">Success</Text>,
           message: <Text size="md">WhatsApp number updated successfully.</Text>,
           color: "green",
         });
       } catch (error) {
-        console.error("Failed to update WhatsApp number:", error);
-        notifications.show({
-          title: <Text size="lg">Error</Text>,
-          message: <Text size="md">Failed to update WhatsApp number.</Text>,
-          color: "red",
-        });
+        setError("Failed to update WhatsApp number.");
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -85,14 +79,31 @@ export default function WhatsApp() {
             <CardDescription>Enter your WhatsApp number to connect your account.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            {!whatsappNo && !isLoading && (
+              <Alert>
+                <AlertTitle>Warning</AlertTitle>
+                <AlertDescription>
+                  You have not set a WhatsApp number. Please set one to enable WhatsApp integration.
+                </AlertDescription>
+              </Alert>
+            )}
             <div className="flex items-center gap-3">
               <Input
                 type="text"
                 value={whatsappNo}
                 onChange={(e) => setWhatsappNo(e.target.value)}
                 placeholder="Enter your WhatsApp number"
+                disabled={isLoading}
               />
-              <Button onClick={handleSave}>Save</Button>
+              <Button onClick={handleSave} disabled={isLoading}>
+                {isLoading ? "Saving..." : "Save"}
+              </Button>
             </div>
           </CardContent>
         </Card>

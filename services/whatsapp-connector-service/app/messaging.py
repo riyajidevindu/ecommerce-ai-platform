@@ -2,49 +2,53 @@ import pika
 import os
 import logging
 import json
+import time
 
 RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/%2F")
 logger = logging.getLogger(__name__)
 
-# Global channel to be initialized on startup
-channel = None
+# Dedicated consumer channel/connection managed in the consumer thread only.
+_consumer_connection = None
+_consumer_channel = None
 
-def get_rabbitmq_channel():
+def _get_consumer_channel():
     """
-    Returns a RabbitMQ channel, creating a new connection if one doesn't exist.
+    Returns a RabbitMQ channel for the consumer thread. Not thread-safe.
     """
-    global channel
-    if channel is None or channel.is_closed:
-        connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_URL))
-        channel = connection.channel()
-    return channel
+    global _consumer_connection, _consumer_channel
+    if _consumer_channel is None or _consumer_channel.is_closed:
+        if _consumer_connection is None or _consumer_connection.is_closed:
+            _consumer_connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_URL))
+        _consumer_channel = _consumer_connection.channel()
+    return _consumer_channel
 
-def publish_message(message_data: dict):
+def publish_message(message_data: dict, _retries: int = 1):
     """
-    Publishes a message to the new_message_events exchange using a persistent channel.
+    Publishes a message to the new_message_events exchange using a short-lived connection.
+    This avoids cross-thread channel reuse issues and is robust for moderate throughput.
     """
+    exchange_name = 'new_message_events'
+    message_body = json.dumps({
+        "event_type": "new_message",
+        "message_data": message_data
+    })
     try:
-        ch = get_rabbitmq_channel()
-        exchange_name = 'new_message_events'
-        ch.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
-
-        message_body = json.dumps({
-            "event_type": "new_message",
-            "message_data": message_data
-        })
-
-        ch.basic_publish(
-            exchange=exchange_name,
-            routing_key='',
-            body=message_body,
-            properties=pika.BasicProperties(delivery_mode=2)
-        )
+        params = pika.URLParameters(RABBITMQ_URL)
+        with pika.BlockingConnection(params) as connection:
+            ch = connection.channel()
+            ch.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
+            ch.basic_publish(
+                exchange=exchange_name,
+                routing_key='',
+                body=message_body,
+                properties=pika.BasicProperties(delivery_mode=2)
+            )
         logger.info(f" [x] Sent {message_body}")
-    except pika.exceptions.AMQPConnectionError as e:
-        logger.error(f"Failed to connect to RabbitMQ: {e}")
-        global channel
-        channel = None  # Reset channel on connection error
     except Exception as e:
+        if _retries > 0:
+            logger.warning(f"Publish failed, retrying... ({e})")
+            time.sleep(1)
+            return publish_message(message_data, _retries=_retries - 1)
         logger.error(f"An error occurred while publishing a message: {e}", exc_info=True)
 
 def _handle_ai_response_ready(data: dict):
@@ -112,28 +116,42 @@ def on_message_callback(ch, method, properties, body):
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
 def start_consumer():
-    try:
-        logger.info(f"Connecting to RabbitMQ at {RABBITMQ_URL}")
-        ch = get_rabbitmq_channel()
-        logger.info("Successfully connected to RabbitMQ.")
+    while True:
+        try:
+            logger.info(f"Connecting to RabbitMQ at {RABBITMQ_URL}")
+            ch = _get_consumer_channel()
+            logger.info("Successfully connected to RabbitMQ.")
 
-        exchanges = {
-            'ai_response_events': 'whatsapp_connector_ai_response_events',
-            'user_fanout_events': 'whatsapp_connector_user_events'
-        }
+            exchanges = {
+                'ai_response_events': 'whatsapp_connector_ai_response_events',
+                'user_fanout_events': 'whatsapp_connector_user_events'
+            }
 
-        for exchange_name, queue_name in exchanges.items():
-            ch.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
-            ch.queue_declare(queue=queue_name, durable=True)
-            ch.queue_bind(exchange=exchange_name, queue=queue_name)
-            ch.basic_consume(queue=queue_name, on_message_callback=on_message_callback)
-            logger.info(f"Consumer set up for exchange '{exchange_name}' on queue '{queue_name}'")
+            for exchange_name, queue_name in exchanges.items():
+                ch.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
+                ch.queue_declare(queue=queue_name, durable=True)
+                ch.queue_bind(exchange=exchange_name, queue=queue_name)
+                ch.basic_consume(queue=queue_name, on_message_callback=on_message_callback)
+                logger.info(f"Consumer set up for exchange '{exchange_name}' on queue '{queue_name}'")
 
-        logger.info(' [*] Waiting for messages. To exit press CTRL+C')
-        ch.start_consuming()
-    except pika.exceptions.AMQPConnectionError as e:
-        logger.error(f"Failed to connect to RabbitMQ: {e}")
-        global channel
-        channel = None
-    except Exception as e:
-        logger.error(f"An error occurred while consuming messages: {e}", exc_info=True)
+            logger.info(' [*] Waiting for messages. To exit press CTRL+C')
+            ch.start_consuming()
+        except pika.exceptions.AMQPConnectionError as e:
+            logger.error(f"Failed to connect to RabbitMQ: {e}. Retrying in 5 seconds...")
+            global _consumer_connection, _consumer_channel
+            try:
+                if _consumer_channel and not _consumer_channel.is_closed:
+                    _consumer_channel.close()
+            except Exception:
+                pass
+            try:
+                if _consumer_connection and not _consumer_connection.is_closed:
+                    _consumer_connection.close()
+            except Exception:
+                pass
+            _consumer_channel = None
+            _consumer_connection = None
+            time.sleep(5)
+        except Exception as e:
+            logger.error(f"An error occurred while consuming messages: {e}. Retrying in 5 seconds...", exc_info=True)
+            time.sleep(5)

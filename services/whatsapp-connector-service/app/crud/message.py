@@ -8,3 +8,12 @@ def create_message(db: Session, message: MessageCreate):
     db.commit()
     db.refresh(db_message)
     return db_message
+
+def update_message_response(db: Session, message_id: int, response_message: str):
+    db_message = db.query(Message).filter(Message.id == message_id).first()
+    if db_message:
+        db_message.response_message = response_message
+        db_message.send_ai = True
+        db.commit()
+        db.refresh(db_message)
+    return db_message

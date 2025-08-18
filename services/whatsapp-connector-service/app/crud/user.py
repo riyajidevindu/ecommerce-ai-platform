@@ -5,6 +5,9 @@ from app.schemas.user import UserCreate
 def get_user(db: Session, user_id: int):
     return db.query(User).filter(User.id == user_id).first()
 
+def get_user_by_whatsapp_no(db: Session, whatsapp_no: str):
+    return db.query(User).filter(User.whatsapp_no == whatsapp_no).first()
+
 def create_user(db: Session, user: UserCreate):
     db_user = User(id=user.id, name=user.name)
     db.add(db_user)
