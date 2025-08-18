@@ -59,3 +59,17 @@ async def whatsapp_webhook(request: dict, db: Session = Depends(get_db)):
     messaging.publish_message(message_data)
 
     return {"status": "ok", "message_id": message.id}
+
+@router.post("/sync-missed-messages")
+async def sync_missed_messages(db: Session = Depends(get_db)):
+    unsent_messages = message_crud.get_unsent_messages(db)
+    for message in unsent_messages:
+        message_data = {
+            "id": message.id,
+            "customer_id": message.customer.id,
+            "whatsapp_no": message.customer.whatsapp_no,
+            "user_id": message.customer.user.id,
+            "user_message": message.message
+        }
+        messaging.publish_message(message_data)
+    return {"status": "ok", "sent_messages": len(unsent_messages)}
