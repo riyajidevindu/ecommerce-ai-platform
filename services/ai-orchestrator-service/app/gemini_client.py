@@ -46,5 +46,8 @@ def generate_response(prompt: str) -> str:
     """
     if not model:
         return "[Gemini unavailable: missing dependency or API key]"
-    response = model.generate_content(prompt)
-    return getattr(response, 'text', str(response))
+    try:
+        response = model.generate_content(prompt)
+        return getattr(response, 'text', str(response))
+    except Exception as e:
+        return f"[Gemini error: {e}]"

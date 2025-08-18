@@ -1,4 +1,5 @@
 from . import gemini_client
+from .groq_client import generate_response as groq_generate_response
 from .db import get_db
 from sqlalchemy.orm import Session
 from .crud.message import update_message_response
@@ -12,12 +13,19 @@ def process_message(channel, message: Message, db: Session):
     """
     try:
         products = get_products_by_user_id(db, message.customer.user_id)
-        
-        if not products:
-            reply = "Sorry, we couldn't find any products for you at the moment. We'll do our best to bring them to you as soon as possible."
-        else:
-            product_info = "\n".join([f"- {p.name}: {p.description}" for p in products])
-            prompt = f"The user is asking about products. Here are the products available for this user:\n{product_info}\n\nUser message: {message.user_message}\n\nPlease generate a suitable response."
+        product_info = "\n".join([f"- {p.name}: {p.description}" for p in products]) if products else "(no products found for this user)"
+        prompt = (
+            "You are a helpful e-commerce assistant. "
+            "Use the product list if available; if not, still provide a polite, useful reply.\n\n"
+            f"Products for user:\n{product_info}\n\n"
+            f"Customer message: {message.user_message}\n\n"
+            "Respond concisely and friendly."
+        )
+        # Prefer Groq; fallback to Gemini if unavailable or errors
+        print("[AI] Trying Groq for message", message.id)
+        reply = groq_generate_response(prompt)
+        if isinstance(reply, str) and reply.startswith("[Groq unavailable"):
+            print("[AI] Groq unavailable; falling back to Gemini for message", message.id)
             reply = gemini_client.generate_response(prompt)
 
         update_message_response(db, message.id, reply)
