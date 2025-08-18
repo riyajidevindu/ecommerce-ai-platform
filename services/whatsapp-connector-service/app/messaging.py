@@ -7,23 +7,34 @@ import time
 RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/%2F")
 logger = logging.getLogger(__name__)
 
-def publish_message(message_data: dict):
+# Global channel to be initialized on startup
+channel = None
+
+def get_rabbitmq_channel():
     """
-    Publishes a message to the new_message_events exchange.
+    Returns a RabbitMQ channel, creating a new connection if one doesn't exist.
     """
-    connection = None
-    try:
+    global channel
+    if channel is None or channel.is_closed:
         connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_URL))
         channel = connection.channel()
+    return channel
+
+def publish_message(message_data: dict):
+    """
+    Publishes a message to the new_message_events exchange using a persistent channel.
+    """
+    try:
+        ch = get_rabbitmq_channel()
         exchange_name = 'new_message_events'
-        channel.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
+        ch.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
 
         message_body = json.dumps({
             "event_type": "new_message",
             "message_data": message_data
-        }, default=str)
+        })
 
-        channel.basic_publish(
+        ch.basic_publish(
             exchange=exchange_name,
             routing_key='',
             body=message_body,
@@ -32,12 +43,10 @@ def publish_message(message_data: dict):
         logger.info(f" [x] Sent {message_body}")
     except pika.exceptions.AMQPConnectionError as e:
         logger.error(f"Failed to connect to RabbitMQ: {e}")
+        global channel
+        channel = None  # Reset channel on connection error
     except Exception as e:
         logger.error(f"An error occurred while publishing a message: {e}", exc_info=True)
-    finally:
-        if connection and connection.is_open:
-            connection.close()
-            logger.info("RabbitMQ connection closed.")
 
 def _handle_ai_response_ready(data: dict):
     message_id = data.get("message_id")
@@ -105,11 +114,9 @@ def on_message_callback(ch, method, properties, body):
 
 def start_consumer():
     while True:
-        connection = None
         try:
             logger.info(f"Connecting to RabbitMQ at {RABBITMQ_URL}")
-            connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_URL))
-            channel = connection.channel()
+            ch = get_rabbitmq_channel()
             logger.info("Successfully connected to RabbitMQ.")
 
             exchanges = {
@@ -118,21 +125,19 @@ def start_consumer():
             }
 
             for exchange_name, queue_name in exchanges.items():
-                channel.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
-                channel.queue_declare(queue=queue_name, durable=True)
-                channel.queue_bind(exchange=exchange_name, queue=queue_name)
-                channel.basic_consume(queue=queue_name, on_message_callback=on_message_callback)
+                ch.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
+                ch.queue_declare(queue=queue_name, durable=True)
+                ch.queue_bind(exchange=exchange_name, queue=queue_name)
+                ch.basic_consume(queue=queue_name, on_message_callback=on_message_callback)
                 logger.info(f"Consumer set up for exchange '{exchange_name}' on queue '{queue_name}'")
 
             logger.info(' [*] Waiting for messages. To exit press CTRL+C')
-            channel.start_consuming()
+            ch.start_consuming()
         except pika.exceptions.AMQPConnectionError as e:
             logger.error(f"Failed to connect to RabbitMQ: {e}. Retrying in 5 seconds...")
-            if connection and connection.is_open:
-                connection.close()
+            global channel
+            channel = None
             time.sleep(5)
         except Exception as e:
             logger.error(f"An error occurred while consuming messages: {e}. Retrying in 5 seconds...", exc_info=True)
-            if connection and connection.is_open:
-                connection.close()
             time.sleep(5)

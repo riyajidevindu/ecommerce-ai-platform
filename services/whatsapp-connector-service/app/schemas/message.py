@@ -10,7 +10,7 @@ class MessageCreate(MessageBase):
 class Message(MessageBase):
     id: int
     response_message: str
-    send_ai: bool
+    is_send_response: bool
 
     class Config:
         from_attributes = True
