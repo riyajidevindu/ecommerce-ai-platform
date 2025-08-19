@@ -50,7 +50,7 @@ export default function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end
-                      className={(nav) => `${getNavCls(nav)} text-[1.2rem] py-6 min-h-[64px] flex items-center`}
+                      className={(nav) => `${getNavCls(nav)} text-[1.24rem] leading-[2.2rem] py-8 min-h-[64px] flex items-center`}
                     >
                       <item.icon className="mr-4 h-20 w-20" />
                       {!collapsed && <span>{item.title}</span>}
