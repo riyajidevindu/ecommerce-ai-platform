@@ -17,3 +17,11 @@ def update_message_response(db: Session, message_id: int, response_message: str)
         db.commit()
         db.refresh(db_message)
     return db_message
+
+def mark_message_sent_to_customer(db: Session, message_id: int):
+    db_message = db.query(Message).filter(Message.id == message_id).first()
+    if db_message:
+        db_message.send_customer = True
+        db.commit()
+        db.refresh(db_message)
+    return db_message
