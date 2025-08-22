@@ -25,15 +25,6 @@ images:
   - name: <ECR_REGISTRY>/file-storage-service
     newName: ${ECR_REGISTRY}/file-storage-service
     newTag: ${IMAGE_TAG}
-  - name: <ECR_REGISTRY>/frontend
-    newName: ${ECR_REGISTRY}/frontend
-    newTag: ${IMAGE_TAG}
-
-configMapGenerator:
-  - name: frontend-config
-    behavior: merge
-    literals:
-      - VITE_API_URL=https://YOUR_DOMAIN
 
 secretGenerator:
   - name: platform-secrets

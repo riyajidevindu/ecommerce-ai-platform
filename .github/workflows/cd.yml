@@ -48,10 +48,6 @@ jobs:
             docker push "$ECR_REGISTRY/$svc:latest"
             docker push "$ECR_REGISTRY/$svc:$GIT_SHA"
           done
-          # Frontend build image (optional) - if serving with Nginx container
-          docker build -t "$ECR_REGISTRY/frontend:latest" -t "$ECR_REGISTRY/frontend:$GIT_SHA" frontend
-          docker push "$ECR_REGISTRY/frontend:latest"
-          docker push "$ECR_REGISTRY/frontend:$GIT_SHA"
 
   deploy:
     needs: build-and-push

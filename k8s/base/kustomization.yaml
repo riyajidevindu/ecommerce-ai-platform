@@ -12,10 +12,5 @@ resources:
   - ai-orchestrator-service.yaml
   - notification-service.yaml
   - file-storage-service.yaml
-  - frontend.yaml
 
-configMapGenerator:
-  - name: frontend-config
-    literals:
-      - VITE_API_URL=https://example.com
 
