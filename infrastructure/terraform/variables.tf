@@ -7,7 +7,7 @@ variable "name" {
 variable "region" {
 	description = "AWS region"
 	type        = string
-	default     = "us-east-1"
+	default     = "ap-south-1"
 }
 
 variable "tags" {
@@ -34,6 +34,24 @@ variable "node_instance_type" {
 	default     = "t3.medium"
 }
 
+variable "node_group_desired_size" {
+  description = "Desired number of worker nodes"
+  type        = number
+  default     = 2
+}
+
+variable "node_group_min_size" {
+  description = "Minimum number of worker nodes"
+  type        = number
+  default     = 1
+}
+
+variable "node_group_max_size" {
+  description = "Maximum number of worker nodes"
+  type        = number
+  default     = 3
+}
+
 variable "vpc_cidr" {
 	description = "VPC CIDR"
 	type        = string
@@ -41,9 +59,9 @@ variable "vpc_cidr" {
 }
 
 variable "azs" {
-	description = "Availability zones"
-	type        = list(string)
-	default     = ["us-east-1a", "us-east-1b"]
+  description = "Availability zones"
+  type        = list(string)
+  default     = ["ap-south-1a", "ap-south-1b"]
 }
 
 variable "public_subnets" {
@@ -106,6 +124,30 @@ variable "rds_password" {
 	description = "RDS master password"
 	type        = string
 	sensitive   = true
+}
+
+variable "use_rds_password_from_secrets_manager" {
+	description = "Fetch RDS password from AWS Secrets Manager instead of tfvars"
+	type        = bool
+	default     = false
+}
+
+variable "rds_password_secret_id" {
+	description = "AWS Secrets Manager Secret ID/ARN containing the RDS password"
+	type        = string
+	default     = ""
+}
+
+variable "rds_password_is_json" {
+	description = "If true, parse the Secrets Manager secret as JSON"
+	type        = bool
+	default     = false
+}
+
+variable "rds_password_secret_json_key" {
+	description = "JSON key to read when rds_password_is_json is true"
+	type        = string
+	default     = "password"
 }
 
 variable "rds_db_name" {

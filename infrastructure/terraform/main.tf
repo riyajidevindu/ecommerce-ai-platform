@@ -85,6 +85,21 @@ resource "aws_ecr_repository" "repos" {
 # ---------------------
 # Optional: RDS PostgreSQL
 # ---------------------
+data "aws_secretsmanager_secret_version" "rds_password" {
+	count     = var.create_rds && var.use_rds_password_from_secrets_manager ? 1 : 0
+	secret_id = var.rds_password_secret_id
+}
+
+locals {
+	rds_password_value = var.create_rds ? (
+		var.use_rds_password_from_secrets_manager
+			? (var.rds_password_is_json
+					? jsondecode(data.aws_secretsmanager_secret_version.rds_password[0].secret_string)[var.rds_password_secret_json_key]
+					: data.aws_secretsmanager_secret_version.rds_password[0].secret_string)
+			: var.rds_password
+	) : null
+}
+
 resource "aws_db_subnet_group" "this" {
 	count      = var.create_rds ? 1 : 0
 	name       = "${var.name}-db-subnet"
@@ -102,7 +117,7 @@ resource "aws_db_instance" "postgres" {
 	db_subnet_group_name      = aws_db_subnet_group.this[0].name
 	vpc_security_group_ids    = [module.vpc.default_security_group_id]
 	username                  = var.rds_username
-	password                  = var.rds_password
+	password                  = local.rds_password_value
 	db_name                   = var.rds_db_name
 	skip_final_snapshot       = true
 	publicly_accessible       = false

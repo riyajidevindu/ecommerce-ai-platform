@@ -61,3 +61,18 @@ aws eks update-kubeconfig --region <region> --name <cluster_name>
 
 - ECR repos are created for each microservice and the frontend; use the GitHub Actions workflows to build/push.
 
+### Secure RDS password handling
+
+Avoid putting the password value in `terraform.tfvars`. Choose one of:
+
+1) Environment variable injection (local-only):
+	- Leave `rds_password` unset in tfvars; pass it at apply time:
+	  - Linux/macOS: `TF_VAR_rds_password=$(aws secretsmanager get-secret-value --secret-id my/secret --query SecretString --output text) terraform apply`
+	  - PowerShell: `$env:TF_VAR_rds_password = (aws secretsmanager get-secret-value --secret-id my/secret | ConvertFrom-Json).SecretString; terraform apply`
+
+2) AWS Secrets Manager (recommended):
+	- Set `use_rds_password_from_secrets_manager = true` and `rds_password_secret_id = "my/secret"` in tfvars.
+	- If the secret is JSON like `{ "password": "..." }`, set `rds_password_is_json = true` and `rds_password_secret_json_key = "password"`.
+
+In both cases, the `rds_password` variable remains sensitive and never stored in state logs. Do not commit secrets.
+

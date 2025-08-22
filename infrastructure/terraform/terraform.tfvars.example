@@ -8,7 +8,7 @@ node_instance_type = "t3.medium"
 
 # Networking
 vpc_cidr        = "10.0.0.0/16"
-azs             = ["us-east-1a", "us-east-1b"]
+azs             = ["ap-south-1a", "ap-south-1b"]
 public_subnets  = ["10.0.0.0/24", "10.0.1.0/24"]
 private_subnets = ["10.0.10.0/24", "10.0.11.0/24"]
 
@@ -29,8 +29,15 @@ rds_engine_version     = "15.5"
 rds_instance_class     = "db.t4g.micro"
 rds_allocated_storage  = 20
 rds_username           = "appuser"
-# rds_password        = "CHANGEME"
+# Do NOT commit rds_password values here. Prefer environment or Secrets Manager:
+# rds_password = "" # leave empty; inject with TF_VAR_rds_password at apply time
 rds_db_name            = "appdb"
+
+# To use AWS Secrets Manager for the password (recommended):
+use_rds_password_from_secrets_manager = false
+rds_password_secret_id                = ""      # e.g. "prod/db/password" or secret ARN
+rds_password_is_json                  = false   # set true if secret string is JSON
+rds_password_secret_json_key          = "password"
 
 # Optional Frontend CDN
 create_frontend_cdn = false
