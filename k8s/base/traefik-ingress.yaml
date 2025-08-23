@@ -2,16 +2,14 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ecommerce-ingress
-  annotations:
-    kubernetes.io/ingress.class: traefik
-    cert-manager.io/cluster-issuer: letsencrypt
 spec:
+  ingressClassName: traefik
   tls:
     - hosts:
-        - api.example.com
-      secretName: api-example-com-tls
+        - api.chat-ai-store.site
+      secretName: api-chat-ai-store-site-tls
   rules:
-    - host: api.example.com
+    - host: api.chat-ai-store.site
       http:
         paths:
           - path: /api/v1/auth

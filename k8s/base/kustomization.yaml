@@ -5,7 +5,11 @@ namespace: ecommerce
 
 resources:
   - ns.yaml
+  - cluster-issuer.yaml
+  - certificate.yaml
+  - traefik-middleware-redirect.yaml
   - traefik-ingress.yaml
+  - traefik-ingress-http.yaml
   - auth-service.yaml
   - stock-service.yaml
   - whatsapp-connector-service.yaml
