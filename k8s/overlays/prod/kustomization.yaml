@@ -6,6 +6,9 @@ namespace: ecommerce
 resources:
   - ../../base
 
+patchesStrategicMerge:
+  - replicas-patch.yaml
+
 images:
   - name: <ECR_REGISTRY>/auth-service
     newName: 398128644108.dkr.ecr.ap-south-1.amazonaws.com/auth-service
