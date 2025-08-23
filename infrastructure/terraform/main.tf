@@ -65,6 +65,7 @@ module "eks" {
 			desired_size = 1
 
 			instance_types = [var.node_instance_type]
+		ami_type       = var.node_ami_type
 			capacity_type  = "ON_DEMAND"
 		}
 	}

@@ -31,13 +31,19 @@ variable "kubernetes_version" {
 variable "node_instance_type" {
 	description = "EKS worker node instance type"
 	type        = string
-	default     = "t3.medium"
+	default     = "t3.micro"
+}
+
+variable "node_ami_type" {
+	description = "EKS node AMI type: AL2_x86_64 | AL2_ARM_64 | BOTTLEROCKET_x86_64 | BOTTLEROCKET_ARM_64 | CUSTOM"
+	type        = string
+	default     = "AL2_x86_64"
 }
 
 variable "node_group_desired_size" {
   description = "Desired number of worker nodes"
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "node_group_min_size" {
@@ -49,7 +55,7 @@ variable "node_group_min_size" {
 variable "node_group_max_size" {
   description = "Maximum number of worker nodes"
   type        = number
-  default     = 3
+  default     = 1
 }
 
 variable "vpc_cidr" {
@@ -105,7 +111,7 @@ variable "rds_engine_version" {
 variable "rds_instance_class" {
 	description = "RDS instance class"
 	type        = string
-	default     = "db.t4g.micro"
+	default     = "db.t3.micro"
 }
 
 variable "rds_allocated_storage" {
