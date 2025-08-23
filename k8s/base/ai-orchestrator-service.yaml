@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-orchestrator-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ai-orchestrator-service
+  template:
+    metadata:
+      labels:
+        app: ai-orchestrator-service
+    spec:
+      containers:
+        - name: ai
+          image: <ECR_REGISTRY>/ai-orchestrator-service:latest
+          ports:
+            - containerPort: 8003
+          env:
+            - name: RABBITMQ_URL
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: rabbitmq_url
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: ai_database_url
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: gemini_api_key
+            - name: GROQ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: groq_api_key
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-orchestrator-service
+spec:
+  selector:
+    app: ai-orchestrator-service
+  ports:
+    - port: 8003
+      targetPort: 8003

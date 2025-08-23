@@ -1,83 +1,80 @@
-import { Helmet } from "react-helmet-async";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from 'react';
+import { getConversations, Conversation, Message } from '@/services/api';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-}
+const AIChat = () => {
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-export default function AIChat() {
-  const [messages, setMessages] = useState<Message[]>([
-    { id: "1", role: "user", content: "Hi! What is the status of my order #12345?" },
-    { id: "2", role: "assistant", content: "Your order #12345 has been shipped and will arrive by Friday." },
-  ]);
-  const [input, setInput] = useState("");
-  const [draft, setDraft] = useState("");
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const data = await getConversations();
+        setConversations(data);
+      } catch (err) {
+        setError('Failed to fetch conversations.');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const previewReply = () => {
-    // Simulate AI proposal
-    setDraft(`Proposed reply: Hello! Thanks for reaching out. ${input}`);
-  };
+    fetchConversations();
+  }, []);
 
-  const approveAndSend = () => {
-    if (!draft.trim()) return;
-    setMessages((m) => [...m, { id: Date.now().toString(), role: "assistant", content: draft }]);
-    setDraft("");
-    setInput("");
-  };
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>{error}</div>;
+  }
 
   return (
-    <div>
-      <Helmet>
-        <title>AI Chat Automation – AI Seller Assistant</title>
-        <meta name="description" content="Preview, approve or edit AI-generated replies before sending." />
-        <link rel="canonical" href="/ai-chat" />
-      </Helmet>
-
-      <h1 className="text-2xl md:text-3xl font-display font-semibold mb-6">AI Chat Automation</h1>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Conversation</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3 max-h-[480px] overflow-auto pr-2">
-                {messages.map((m) => (
-                  <div key={m.id} className={`p-3 rounded-md border ${m.role === 'assistant' ? 'bg-secondary' : 'bg-card'}`}>
-                    <div className="text-xs text-muted-foreground mb-1">{m.role === 'assistant' ? 'Assistant' : 'Customer'}</div>
-                    <div>{m.content}</div>
+    <div className="p-4">
+      <h1 className="text-2xl font-bold mb-4 text-foreground">AI Conversations</h1>
+      <Accordion type="single" collapsible className="w-full">
+        {conversations.map((conversation) => (
+          <AccordionItem key={conversation.whatsapp_no} value={conversation.whatsapp_no}>
+            <AccordionTrigger>
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center">
+                  <Avatar>
+                    <AvatarImage src={`https://i.pravatar.cc/150?u=${conversation.whatsapp_no}`} />
+                    <AvatarFallback>{conversation.whatsapp_no.slice(0, 2)}</AvatarFallback>
+                  </Avatar>
+                  <div className="ml-4">
+                    <p className="font-semibold">{conversation.whatsapp_no}</p>
+                    <p className="text-sm text-gray-500 truncate">{conversation.first_message}</p>
+                  </div>
+                </div>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <ScrollArea className="h-72 w-full rounded-md border p-4">
+                {conversation.messages.map((message: Message) => (
+                  <div key={message.id} className="mb-4">
+                    <p className="font-semibold">You:</p>
+                    <p>{message.user_message}</p>
+                    {message.response_message && (
+                      <>
+                        <p className="font-semibold mt-2">AI:</p>
+                        <p>{message.response_message}</p>
+                      </>
+                    )}
                   </div>
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Compose</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Input placeholder="Customer message context" value={input} onChange={(e) => setInput(e.target.value)} />
-              <Button onClick={previewReply}>Generate Reply</Button>
-              <Textarea placeholder="Edit the AI draft here" value={draft} onChange={(e) => setDraft(e.target.value)} rows={6} />
-              <div className="flex gap-2">
-                <Button onClick={approveAndSend}>Approve & Send</Button>
-                <Button variant="secondary" onClick={() => setDraft("")}>Discard</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
+              </ScrollArea>
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
     </div>
   );
-}
+};
+
+export default AIChat;

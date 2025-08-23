@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ dev, main ]
+  push:
+    branches: [ dev ]
+
+jobs:
+  test-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Bun (if bun.lockb present)
+        if: hashFiles('frontend/bun.lockb') != ''
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.1.24'
+
+      - name: Show Bun version
+        if: hashFiles('frontend/bun.lockb') != ''
+        run: bun --version
+
+      - name: Cache frontend node_modules (Bun)
+        if: hashFiles('frontend/bun.lockb') != ''
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: bun-node-modules-${{ hashFiles('frontend/bun.lockb') }}
+
+      - name: Frontend install and lint (Bun)
+        if: hashFiles('frontend/bun.lockb') != ''
+        working-directory: frontend
+        run: |
+          bun install
+          bun run lint || true
+          bun run build
+
+      - name: Frontend install and lint (npm fallback)
+        if: hashFiles('frontend/bun.lockb') == ''
+        working-directory: frontend
+        run: |
+          corepack enable
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+          npm run lint --if-present
+          npm run build --if-present
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Test Python services (basic)
+        run: |
+          pip install -r services/auth-service/requirements.txt || true
+          pip install -r services/stock-service/requirements.txt || true
+          pip install -r services/ai-orchestrator-service/requirements.txt || true
+          pip install -r services/whatsapp-connector-service/requirements.txt || true
+          pip install -r services/notification-service/requirements.txt || true
+          pip install -r services/file-storage-service/requirements.txt || true
+          python -m pytest -q || true

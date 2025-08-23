@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: api-chat-ai-store-site-tls
+  namespace: ecommerce
+spec:
+  secretName: api-chat-ai-store-site-tls
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt
+  commonName: api.chat-ai-store.site
+  dnsNames:
+    - api.chat-ai-store.site

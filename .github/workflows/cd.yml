@@ -1,0 +1,114 @@
+name: CD
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+env:
+  AWS_REGION: ap-south-1
+  NAMESPACE: ecommerce
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push images
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          GIT_SHA: ${{ github.sha }}
+        run: |
+          set -e
+          # Build and push per service
+          declare -a services=(
+            "auth-service"
+            "stock-service"
+            "whatsapp-connector-service"
+            "ai-orchestrator-service"
+            "notification-service"
+            "file-storage-service"
+          )
+          for svc in "${services[@]}"; do
+            docker build -t "$ECR_REGISTRY/$svc:latest" -t "$ECR_REGISTRY/$svc:$GIT_SHA" "services/$svc"
+            docker push "$ECR_REGISTRY/$svc:latest"
+            docker push "$ECR_REGISTRY/$svc:$GIT_SHA"
+          done
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout manifests
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.30.0
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --region $AWS_REGION --name ${{ secrets.EKS_CLUSTER_NAME }}
+
+      - name: Login to ECR (for registry URL)
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Apply manifests
+        run: |
+          kubectl apply -k k8s/overlays/prod
+
+      - name: Roll deployments to new image tag
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          set -e
+          declare -a deployments=(
+            "auth-service:auth"
+            "stock-service:stock"
+            "whatsapp-connector-service:whatsapp"
+            "ai-orchestrator-service:ai"
+            "notification-service:notification"
+            "file-storage-service:file-storage"
+          )
+          for item in "${deployments[@]}"; do
+            IFS=":" read -r deploy container <<< "$item"
+            echo "Setting $deploy ($container) -> $ECR_REGISTRY/$deploy:$IMAGE_TAG"
+            kubectl -n $NAMESPACE set image deployment/$deploy $container=$ECR_REGISTRY/$deploy:$IMAGE_TAG --record=true
+          done
+
+      - name: Wait for rollout
+        env:
+          TIMEOUT: 5m
+        run: |
+          set -e
+          for d in auth-service stock-service whatsapp-connector-service ai-orchestrator-service notification-service file-storage-service; do
+            echo "Waiting for rollout of $d"
+            kubectl -n $NAMESPACE rollout status deployment/$d --timeout=$TIMEOUT
+          done

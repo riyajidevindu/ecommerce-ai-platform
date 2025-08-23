@@ -45,7 +45,7 @@ export default function Dashboard() {
         <link rel="canonical" href="/dashboard" />
       </Helmet>
 
-      <h1 className="text-2xl md:text-3xl font-display font-semibold mb-6">Dashboard</h1>
+      <h1 className="text-2xl md:text-3xl font-display font-semibold mb-6 text-foreground">Dashboard</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <StatCard title="Recent Messages" value="128" />

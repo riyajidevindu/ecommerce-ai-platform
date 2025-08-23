@@ -1,0 +1,37 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ecommerce
+
+resources:
+  - ../../base
+
+images:
+  - name: <ECR_REGISTRY>/auth-service
+    newName: 398128644108.dkr.ecr.ap-south-1.amazonaws.com/auth-service
+    newTag: latest
+  - name: <ECR_REGISTRY>/stock-service
+    newName: 398128644108.dkr.ecr.ap-south-1.amazonaws.com/stock-service
+    newTag: latest
+  - name: <ECR_REGISTRY>/whatsapp-connector-service
+    newName: 398128644108.dkr.ecr.ap-south-1.amazonaws.com/whatsapp-connector-service
+    newTag: latest
+  - name: <ECR_REGISTRY>/ai-orchestrator-service
+    newName: 398128644108.dkr.ecr.ap-south-1.amazonaws.com/ai-orchestrator-service
+    newTag: latest
+  - name: <ECR_REGISTRY>/notification-service
+    newName: 398128644108.dkr.ecr.ap-south-1.amazonaws.com/notification-service
+    newTag: latest
+  - name: <ECR_REGISTRY>/file-storage-service
+    newName: 398128644108.dkr.ecr.ap-south-1.amazonaws.com/file-storage-service
+    newTag: latest
+
+secretGenerator:
+  - name: platform-secrets
+    literals:
+      - rabbitmq_url=${RABBITMQ_URL}
+      - stock_database_url=${STOCK_DATABASE_URL}
+      - whatsapp_database_url=${WHATSAPP_DATABASE_URL}
+      - ai_database_url=${AI_DATABASE_URL}
+      - gemini_api_key=${GEMINI_API_KEY}
+      - groq_api_key=${GROQ_API_KEY}

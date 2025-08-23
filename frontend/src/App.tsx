@@ -11,11 +11,14 @@ import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import OAuthCallback from "./pages/auth/OAuthCallback";
 import WhatsApp from "./pages/WhatsApp";
 import Stock from "./pages/Stock";
 import AIChat from "./pages/AIChat";
 import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
+import ProtectedRoute from "./components/common/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -29,7 +32,13 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route element={<AppLayout />}>
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <AppLayout />
+                  </ProtectedRoute>
+                }
+              >
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/whatsapp" element={<WhatsApp />} />
                 <Route path="/stock" element={<Stock />} />
@@ -39,6 +48,8 @@ const App = () => (
               </Route>
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/auth/oauth-callback" element={<OAuthCallback />} />
               {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
             </Routes>
