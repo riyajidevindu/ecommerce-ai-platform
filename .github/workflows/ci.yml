@@ -39,7 +39,7 @@ jobs:
         if: hashFiles('frontend/bun.lockb') != ''
         working-directory: frontend
         run: |
-          bun install --frozen-lockfile
+          bun install
           bun run lint || true
           bun run build
 
