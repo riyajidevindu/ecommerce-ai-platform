@@ -100,7 +100,27 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Apply manifests
+        env:
+          RABBITMQ_URL: ${{ secrets.RABBITMQ_URL }}
+          AUTH_DATABASE_URL: ${{ secrets.AUTH_DATABASE_URL }}
+          AUTH_SECRET_KEY: ${{ secrets.AUTH_SECRET_KEY }}
+          STOCK_DATABASE_URL: ${{ secrets.STOCK_DATABASE_URL }}
+          WHATSAPP_DATABASE_URL: ${{ secrets.WHATSAPP_DATABASE_URL }}
+          AI_DATABASE_URL: ${{ secrets.AI_DATABASE_URL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
+          set -e
+          cat > k8s/overlays/prod/secrets.env << EOF
+          rabbitmq_url=${RABBITMQ_URL}
+          database_url=${AUTH_DATABASE_URL}
+          secret_key=${AUTH_SECRET_KEY}
+          stock_database_url=${STOCK_DATABASE_URL}
+          whatsapp_database_url=${WHATSAPP_DATABASE_URL}
+          ai_database_url=${AI_DATABASE_URL}
+          gemini_api_key=${GEMINI_API_KEY}
+          groq_api_key=${GROQ_API_KEY}
+          EOF
           kubectl apply -k k8s/overlays/prod
 
       - name: Roll deployments to new image tag
@@ -125,10 +145,19 @@ jobs:
 
       - name: Wait for rollout
         env:
-          TIMEOUT: 5m
+          TIMEOUT: 10m
         run: |
           set -e
           for d in auth-service stock-service whatsapp-connector-service ai-orchestrator-service notification-service file-storage-service; do
             echo "Waiting for rollout of $d"
             kubectl -n $NAMESPACE rollout status deployment/$d --timeout=$TIMEOUT
           done
+
+      - name: Debug on failure (pods, events)
+        if: failure()
+        run: |
+          echo "--- Pods ---"; kubectl -n $NAMESPACE get pods -o wide || true
+          echo "--- Auth deployment describe ---"; kubectl -n $NAMESPACE describe deployment auth-service || true
+          echo "--- Auth pods describe ---"; for p in $(kubectl -n $NAMESPACE get pods -l app=auth-service -o name); do kubectl -n $NAMESPACE describe $p || true; done
+          echo "--- Auth pods logs (last 200) ---"; for p in $(kubectl -n $NAMESPACE get pods -l app=auth-service -o name); do kubectl -n $NAMESPACE logs --tail=200 $p || true; done
+          echo "--- Recent events ---"; kubectl -n $NAMESPACE get events --sort-by=.metadata.creationTimestamp | tail -n 100 || true
