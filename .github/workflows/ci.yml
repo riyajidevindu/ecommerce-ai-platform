@@ -18,11 +18,26 @@ jobs:
         with:
           node-version: 20
 
-      - name: Frontend install and lint
+      - name: Setup Bun (if bun.lockb present)
+        if: hashFiles('frontend/bun.lockb') != ''
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Frontend install and lint (Bun)
+        if: hashFiles('frontend/bun.lockb') != ''
+        working-directory: frontend
+        run: |
+          bun install --frozen-lockfile
+          bun run lint || true
+          bun run build
+
+      - name: Frontend install and lint (npm fallback)
+        if: hashFiles('frontend/bun.lockb') == ''
         working-directory: frontend
         run: |
           corepack enable
-          npm ci
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
           npm run lint --if-present
           npm run build --if-present
 
