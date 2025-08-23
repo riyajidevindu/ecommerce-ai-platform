@@ -22,7 +22,18 @@ jobs:
         if: hashFiles('frontend/bun.lockb') != ''
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: '1.1.24'
+
+      - name: Show Bun version
+        if: hashFiles('frontend/bun.lockb') != ''
+        run: bun --version
+
+      - name: Cache frontend node_modules (Bun)
+        if: hashFiles('frontend/bun.lockb') != ''
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: bun-node-modules-${{ hashFiles('frontend/bun.lockb') }}
 
       - name: Frontend install and lint (Bun)
         if: hashFiles('frontend/bun.lockb') != ''
