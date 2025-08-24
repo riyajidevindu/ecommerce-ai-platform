@@ -58,17 +58,17 @@ module "eks" {
 	subnet_ids                     = concat(module.vpc.private_subnets)
 	cluster_endpoint_public_access = true
 
-	eks_managed_node_groups = {
-		default = {
-			min_size     = 1
-			max_size     = 3
-			desired_size = 1
+		eks_managed_node_groups = {
+			default = {
+				min_size     = var.node_group_min_size
+				max_size     = var.node_group_max_size
+				desired_size = var.node_group_desired_size
 
-			instance_types = [var.node_instance_type]
-		ami_type       = var.node_ami_type
-			capacity_type  = "ON_DEMAND"
+				instance_types = [var.node_instance_type]
+				ami_type       = var.node_ami_type
+				capacity_type  = "ON_DEMAND"
+			}
 		}
-	}
 
 	tags = var.tags
 }
