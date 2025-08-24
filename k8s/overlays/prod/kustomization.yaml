@@ -8,6 +8,7 @@ resources:
 
 patchesStrategicMerge:
   - replicas-patch.yaml
+  - strategy-patch.yaml
 
 images:
   - name: <ECR_REGISTRY>/auth-service
