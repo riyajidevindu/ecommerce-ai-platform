@@ -28,6 +28,26 @@ spec:
                 secretKeyRef:
                   name: platform-secrets
                   key: whatsapp_database_url
+            - name: WHATSAPP_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: whatsapp_access_token
+            - name: WHATSAPP_PHONE_NUMBER_ID
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: whatsapp_phone_number_id
+            - name: WHATSAPP_API_VERSION
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: whatsapp_api_version
+            - name: WHATSAPP_VERIFY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: whatsapp_verify_token
 ---
 apiVersion: v1
 kind: Service

@@ -111,6 +111,10 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           CORS_ALLOW_ORIGINS: ${{ secrets.CORS_ALLOW_ORIGINS }}
           CORS_ALLOW_ORIGIN_REGEX: ${{ secrets.CORS_ALLOW_ORIGIN_REGEX }}
+          WHATSAPP_ACCESS_TOKEN: ${{ secrets.WHATSAPP_ACCESS_TOKEN }}
+          WHATSAPP_PHONE_NUMBER_ID: ${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}
+          WHATSAPP_API_VERSION: ${{ secrets.WHATSAPP_API_VERSION }}
+          WHATSAPP_VERIFY_TOKEN: ${{ secrets.WHATSAPP_VERIFY_TOKEN }}
         run: |
           set -e
           cat > k8s/overlays/prod/secrets.env << EOF
@@ -124,6 +128,10 @@ jobs:
           groq_api_key=${GROQ_API_KEY}
           CORS_ALLOW_ORIGINS=${CORS_ALLOW_ORIGINS}
           CORS_ALLOW_ORIGIN_REGEX=${CORS_ALLOW_ORIGIN_REGEX}
+          whatsapp_access_token=${WHATSAPP_ACCESS_TOKEN}
+          whatsapp_phone_number_id=${WHATSAPP_PHONE_NUMBER_ID}
+          whatsapp_api_version=${WHATSAPP_API_VERSION}
+          whatsapp_verify_token=${WHATSAPP_VERIFY_TOKEN}
           EOF
           kubectl apply -k k8s/overlays/prod
 
