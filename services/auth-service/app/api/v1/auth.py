@@ -86,7 +86,8 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
     access_token = create_access_token(data={"sub": user.email})
     refresh_token = create_refresh_token(db=db, user_id=user.id)
     
-    response = RedirectResponse(url=f"{os.getenv('FRONTEND_URL')}/auth/oauth-callback?access_token={access_token}")
+    frontend_url = os.getenv('FRONTEND_URL', 'https://app.chat-ai-store.site')
+    response = RedirectResponse(url=f"{frontend_url}/auth/oauth-callback?access_token={access_token}")
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,

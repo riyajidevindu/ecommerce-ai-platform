@@ -149,7 +149,7 @@ export default function Login() {
               variant="default"
               color="gray"
               component="a"
-              href="http://localhost/api/v1/auth/google/login"
+              href={`${import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && window.location.hostname.endsWith('vercel.app') ? 'https://api.chat-ai-store.site' : 'http://localhost')}/api/v1/auth/google/login`}
             >
               Google
             </Button>
