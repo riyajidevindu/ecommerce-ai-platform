@@ -6,8 +6,12 @@ export const setAuthToken = (token: string) => {
   accessToken = token;
 };
 
+const defaultBaseUrl = (typeof window !== 'undefined' && window.location.hostname.endsWith('vercel.app'))
+  ? 'https://api.chat-ai-store.site'
+  : (import.meta.env.VITE_API_URL || 'http://localhost');
+
 export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost',
+  baseURL: defaultBaseUrl,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -30,13 +34,14 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response.status === 401 && !originalRequest._retry) {
+  if (error?.response?.status === 401 && originalRequest && !originalRequest._retry) {
       if (originalRequest.url === '/api/v1/auth/refresh') {
         return Promise.reject(error); // Don't retry refresh token requests
       }
       originalRequest._retry = true;
       try {
-        const response = await apiClient.post<{ access_token: string }>('/api/v1/auth/refresh');
+        const refreshPath = '/api/v1/auth/refresh';
+        const response = await apiClient.post<{ access_token: string }>(refreshPath);
         const { access_token } = response.data;
         setAuthToken(access_token);
         originalRequest.headers.Authorization = `Bearer ${access_token}`;
