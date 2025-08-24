@@ -6,12 +6,21 @@ export const setAuthToken = (token: string) => {
   accessToken = token;
 };
 
-const defaultBaseUrl = (typeof window !== 'undefined' && window.location.hostname.endsWith('vercel.app'))
-  ? 'https://api.chat-ai-store.site'
-  : (import.meta.env.VITE_API_URL || 'http://localhost');
+// Compute a sensible API base URL for browser and server contexts
+const hostname = (typeof window !== 'undefined') ? window.location.hostname : '';
+let defaultBaseUrl = import.meta.env.VITE_API_URL as string | undefined;
+if (!defaultBaseUrl) {
+  if (hostname.endsWith('.vercel.app') || hostname.endsWith('chat-ai-store.site')) {
+    defaultBaseUrl = 'https://api.chat-ai-store.site';
+  } else {
+    defaultBaseUrl = 'http://localhost';
+  }
+}
+
+export const API_BASE_URL = defaultBaseUrl;
 
 export const apiClient = axios.create({
-  baseURL: defaultBaseUrl,
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
