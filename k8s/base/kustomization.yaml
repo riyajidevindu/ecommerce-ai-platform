@@ -10,12 +10,7 @@ resources:
   - traefik-middleware-redirect.yaml
   - traefik-ingress.yaml
   - traefik-ingress-http.yaml
-  - strip-prefix-middlewares.yaml
-  - ingress-auth.yaml
-  - ingress-products.yaml
-  - ingress-whatsapp.yaml
-  - ingress-ai.yaml
-  - ingress-notifications.yaml
+  # Use a single ingress with full prefixed paths; disable per-service ingresses and strip middlewares to avoid route conflicts
   - postgres-headless-alias.yaml
   - rabbitmq.yaml
   - auth-service.yaml
