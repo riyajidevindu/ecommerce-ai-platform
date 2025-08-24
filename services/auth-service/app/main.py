@@ -18,10 +18,14 @@ app = FastAPI(
 
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY"))
 
+_extra_origins = [o.strip() for o in os.getenv("CORS_ALLOW_ORIGINS", "").split(",") if o.strip()]
 origins = [
     "http://localhost",
     "http://localhost:8080",
+    "https://ecommerce-ai-platform.vercel.app",
+    # Add other production frontend domains here if needed
 ]
+origins += _extra_origins
 
 app.add_middleware(
     CORSMiddleware,
@@ -40,13 +44,4 @@ def health_check():
     Health check endpoint.
     """
     return {"status": "ok"}
-    
-    # Expose health on the ingress path prefix without requiring path rewriting
-    from fastapi import APIRouter
-    _health_router = APIRouter(prefix="/api/v1/auth")
-    
-    @_health_router.get("/health")
-    def health_check_prefixed():
-        return {"status": "ok"}
-    
-    app.include_router(_health_router, tags=["health"]) 
+

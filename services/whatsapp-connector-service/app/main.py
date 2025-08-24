@@ -7,6 +7,7 @@ from app.api.v1 import users, whatsapp
 import threading
 from . import messaging
 from fastapi.middleware.cors import CORSMiddleware
+import os
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -20,10 +21,13 @@ app = FastAPI(
     version="0.1.0"
 )
 
+_extra_origins = [o.strip() for o in os.getenv("CORS_ALLOW_ORIGINS", "").split(",") if o.strip()]
 origins = [
     "http://localhost",
     "http://localhost:8080",
+    "https://ecommerce-ai-platform.vercel.app",
 ]
+origins += _extra_origins
 
 app.add_middleware(
     CORSMiddleware,
