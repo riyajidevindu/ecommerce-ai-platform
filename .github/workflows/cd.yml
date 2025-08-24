@@ -109,6 +109,8 @@ jobs:
           AI_DATABASE_URL: ${{ secrets.AI_DATABASE_URL }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          CORS_ALLOW_ORIGINS: ${{ secrets.CORS_ALLOW_ORIGINS }}
+          CORS_ALLOW_ORIGIN_REGEX: ${{ secrets.CORS_ALLOW_ORIGIN_REGEX }}
         run: |
           set -e
           cat > k8s/overlays/prod/secrets.env << EOF
@@ -120,6 +122,8 @@ jobs:
           ai_database_url=${AI_DATABASE_URL}
           gemini_api_key=${GEMINI_API_KEY}
           groq_api_key=${GROQ_API_KEY}
+          CORS_ALLOW_ORIGINS=${CORS_ALLOW_ORIGINS}
+          CORS_ALLOW_ORIGIN_REGEX=${CORS_ALLOW_ORIGIN_REGEX}
           EOF
           kubectl apply -k k8s/overlays/prod
 
