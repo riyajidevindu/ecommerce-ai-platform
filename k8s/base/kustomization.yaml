@@ -10,6 +10,8 @@ resources:
   - traefik-middleware-redirect.yaml
   - traefik-ingress.yaml
   - traefik-ingress-http.yaml
+  - postgres-headless-alias.yaml
+  - rabbitmq.yaml
   - auth-service.yaml
   - stock-service.yaml
   - whatsapp-connector-service.yaml
