@@ -33,6 +33,16 @@ spec:
                 secretKeyRef:
                   name: platform-secrets
                   key: rabbitmq_url
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: google_client_id
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: google_client_secret
 ---
 apiVersion: v1
 kind: Service
