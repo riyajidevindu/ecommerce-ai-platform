@@ -18,14 +18,20 @@ app = FastAPI(
 
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY"))
 
+_extra_origins = [o.strip() for o in os.getenv("CORS_ALLOW_ORIGINS", "").split(",") if o.strip()]
 origins = [
     "http://localhost",
     "http://localhost:8080",
+    "https://ecommerce-ai-platform.vercel.app",
+    # Add other production frontend domains here if needed
 ]
+origins += _extra_origins
+_cors_origin_regex = os.getenv("CORS_ALLOW_ORIGIN_REGEX", "").strip() or None
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=_cors_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -40,3 +46,4 @@ def health_check():
     Health check endpoint.
     """
     return {"status": "ok"}
+

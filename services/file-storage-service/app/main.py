@@ -10,9 +10,17 @@ app = FastAPI(
     version="0.1.0"
 )
 
+_extra_origins = [o.strip() for o in os.getenv("CORS_ALLOW_ORIGINS", "").split(",") if o.strip()]
+_origins = [
+    "http://localhost:8080",
+    "http://localhost:5173",
+    "https://ecommerce-ai-platform.vercel.app",
+]
+_origins += _extra_origins
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

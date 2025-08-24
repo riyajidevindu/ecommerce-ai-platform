@@ -2,6 +2,7 @@ import logging
 import threading
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+import os
 from app.api.v1 import products
 from app.db.session import engine
 from app.db.base import Base
@@ -40,16 +41,21 @@ async def log_requests(request: Request, call_next):
     return response
 
 # CORS configuration to allow frontend access
+_extra_origins = [o.strip() for o in os.getenv("CORS_ALLOW_ORIGINS", "").split(",") if o.strip()]
 origins = [
     "http://localhost:8080",  # frontend custom port
     "http://localhost:5173",  # Vite default dev port
     "http://127.0.0.1:8080",
     "http://127.0.0.1:5173",
+    "https://ecommerce-ai-platform.vercel.app",
 ]
+origins += _extra_origins
+_cors_origin_regex = os.getenv("CORS_ALLOW_ORIGIN_REGEX", "").strip() or None
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=_cors_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -1,0 +1,49 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: auth-strip
+  namespace: ecommerce
+spec:
+  stripPrefix:
+    prefixes:
+      - /api/v1/auth
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: products-strip
+  namespace: ecommerce
+spec:
+  stripPrefix:
+    prefixes:
+      - /api/v1/products
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: whatsapp-strip
+  namespace: ecommerce
+spec:
+  stripPrefix:
+    prefixes:
+      - /api/v1/whatsapp
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: ai-strip
+  namespace: ecommerce
+spec:
+  stripPrefix:
+    prefixes:
+      - /api/v1/ai
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: notifications-strip
+  namespace: ecommerce
+spec:
+  stripPrefix:
+    prefixes:
+      - /api/v1/notifications
