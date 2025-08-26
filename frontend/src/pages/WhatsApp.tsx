@@ -17,14 +17,16 @@ export default function WhatsApp() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
+  const [phoneNumberId, setPhoneNumberId] = useState<string>("");
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         const meResponse = await getCurrentUser();
         setUserId(meResponse.id);
-        const whatsappUser = await getWhatsAppUser(meResponse.id);
-        setWhatsappNo(whatsappUser.whatsapp_no || "");
+  const whatsappUser = await getWhatsAppUser(meResponse.id);
+  setWhatsappNo(whatsappUser.whatsapp_no || "");
+  setPhoneNumberId(whatsappUser.phone_number_id || "");
       } catch (error) {
         setError("Failed to fetch user data.");
       } finally {
@@ -48,7 +50,7 @@ export default function WhatsApp() {
 
       setIsLoading(true);
       try {
-        await createOrUpdateWhatsAppUser(userId, whatsappNo);
+        await createOrUpdateWhatsAppUser(userId, { whatsapp_no: whatsappNo, phone_number_id: phoneNumberId || undefined });
         notifications.show({
           title: <Text size="lg">Success</Text>,
           message: <Text size="md">WhatsApp number updated successfully.</Text>,
@@ -93,17 +95,32 @@ export default function WhatsApp() {
                 </AlertDescription>
               </Alert>
             )}
-            <div className="flex items-center gap-3">
-              <Input
-                type="text"
-                value={whatsappNo}
-                onChange={(e) => setWhatsappNo(e.target.value)}
-                placeholder="Enter your WhatsApp number"
-                disabled={isLoading}
-              />
-              <Button onClick={handleSave} disabled={isLoading}>
-                {isLoading ? "Saving..." : "Save"}
-              </Button>
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <Input
+                  type="text"
+                  value={whatsappNo}
+                  onChange={(e) => setWhatsappNo(e.target.value)}
+                  placeholder="Enter your WhatsApp number"
+                  disabled={isLoading}
+                />
+              </div>
+              <div>
+                <Label className="mb-1 block">Phone Number ID (optional)</Label>
+                <Input
+                  type="text"
+                  value={phoneNumberId}
+                  onChange={(e) => setPhoneNumberId(e.target.value)}
+                  placeholder="Enter your WhatsApp Phone Number ID"
+                  disabled={isLoading}
+                />
+                <p className="text-xs text-muted-foreground mt-1">Used to verify webhooks and route messages correctly. Leave blank if unsure.</p>
+              </div>
+              <div>
+                <Button onClick={handleSave} disabled={isLoading}>
+                  {isLoading ? "Saving..." : "Save"}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

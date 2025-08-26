@@ -250,8 +250,9 @@ export const getConversations = async (): Promise<Conversation[]> => {
 
 // WhatsApp Service
 export interface WhatsAppUser {
-  user_id: number;
-  whatsapp_no: string;
+  id: number;
+  whatsapp_no?: string | null;
+  phone_number_id?: string | null;
 }
 
 export const getWhatsAppUser = async (userId: number): Promise<WhatsAppUser> => {
@@ -264,9 +265,12 @@ export const getWhatsAppUser = async (userId: number): Promise<WhatsAppUser> => 
   }
 };
 
-export const createOrUpdateWhatsAppUser = async (userId: number, whatsappNo: string): Promise<WhatsAppUser> => {
+export const createOrUpdateWhatsAppUser = async (
+  userId: number,
+  data: { whatsapp_no?: string; phone_number_id?: string }
+): Promise<WhatsAppUser> => {
   try {
-    const response = await apiClient.post<WhatsAppUser>(`/api/v1/whatsapp/user/${userId}`, { whatsapp_no: whatsappNo });
+    const response = await apiClient.post<WhatsAppUser>(`/api/v1/whatsapp/user/${userId}`, data);
     return response.data;
   } catch (error) {
     console.error('Error creating/updating WhatsApp user:', error);
