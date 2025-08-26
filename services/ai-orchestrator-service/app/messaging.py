@@ -145,17 +145,21 @@ def _handle_new_message(channel, data: dict):
         from .schemas.customer import CustomerCreate
         from .schemas.message import MessageBase
 
+        # Extract the tenant/user id once and pass it through.
+        user_id = message_data["user_id"]
+
         customer = customer_crud.get_customer(db, customer_id=message_data["customer_id"])
         if not customer:
             customer = customer_crud.create_customer(db, customer=CustomerCreate(
-                user_id=message_data["user_id"]
+                user_id=user_id
             ), customer_id=message_data["customer_id"])
 
         message = message_crud.create_message(db, message=MessageBase(
             user_message=message_data["user_message"]
         ), customer_id=customer.id, message_id=message_data["id"])
 
-        message_processor.process_message(channel, message, db)
+        # Ensure the message is processed within the correct user scope
+        message_processor.process_message(channel, message, db, user_id=user_id)
     finally:
         db.close()
 

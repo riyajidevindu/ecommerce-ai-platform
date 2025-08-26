@@ -7,12 +7,23 @@ from .crud.product import get_products_by_user_id
 from .models.message import Message
 from . import messaging
 
-def process_message(channel, message: Message, db: Session):
+def process_message(channel, message: Message, db: Session, user_id: int):
     """
     Processes a single message and publishes the AI response.
+
+    Inputs:
+    - channel: RabbitMQ channel to publish the AI response.
+    - message: DB Message row (contains customer/message ids and text).
+    - db: SQLAlchemy session.
+    - user_id: The owner/tenant id associated with this conversation.
+
+    Note: We intentionally rely on the user_id coming with the event payload
+    to avoid any mismatch due to cross-service customer id collisions.
     """
     try:
-        products = get_products_by_user_id(db, message.customer.user_id)
+        # Always scope products by the user_id provided with the message event
+        # rather than traversing message.customer to avoid tenant leakage.
+        products = get_products_by_user_id(db, user_id)
         product_info = "\n".join([f"- {p.name}: {p.description}" for p in products]) if products else "(no products found for this user)"
         prompt = (
             "You are a helpful e-commerce assistant. "
