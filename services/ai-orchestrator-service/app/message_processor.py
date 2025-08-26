@@ -119,13 +119,13 @@ def process_message(channel, message: Message, db: Session, user_id: int):
                 f"- Product name: {fmt(chosen.name)}\n"
                 f"- Price: {fmt(chosen.price)}\n"
                 f"- Available quantity: {fmt(chosen.available_qty)}\n"
-                f"- Total stock quantity: {fmt(chosen.stock_qty)}\n"
             )
             prompt = (
                 "You are a precise e-commerce assistant.\n"
                 + facts + "\n"
                 f"Customer message: {message.user_message}\n\n"
-                "If the customer asks for price or stock, state the exact values from the facts."
+                "If the customer asks about stock, ONLY state the available quantity. Do NOT mention total stock quantities."
+                " If the customer asks price, state the exact price."
                 " If something is missing (N/A), say you don't have that information."
                 " Keep it concise and friendly."
             )
@@ -142,7 +142,7 @@ def process_message(channel, message: Message, db: Session, user_id: int):
             top: List[object] = sorted(products, key=lambda p: _score_product_match(message.user_message or "", getattr(p, "name", None), getattr(p, "sku", None)), reverse=True)[:3]
             # Do not expose SKU in customer-facing text
             listing = "\n".join([
-                f"- {fmt(p.name)}: price={fmt(p.price)}, available={fmt(p.available_qty)}, stock={fmt(p.stock_qty)}"
+                f"- {fmt(p.name)}: price={fmt(p.price)}, available={fmt(p.available_qty)}"
                 for p in top
             ])
             prompt = (
@@ -150,7 +150,7 @@ def process_message(channel, message: Message, db: Session, user_id: int):
                 "We couldn't confidently identify a single product. Here are possible matches with facts.\n"
                 + listing + "\n\n"
                 f"Customer message: {message.user_message}\n\n"
-                "Ask the customer to confirm which product (by name) they mean, and only then provide exact details."
+                "Ask the customer to confirm which product (by name) they mean. When discussing stock, ONLY mention available quantity—never total stock."
             )
         else:
             prompt = (
