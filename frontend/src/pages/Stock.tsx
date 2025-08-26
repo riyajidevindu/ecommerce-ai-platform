@@ -37,6 +37,31 @@ const Stock = () => {
     }
   };
 
+  const clamp = (val: number, min: number, max: number) => Math.max(min, Math.min(max, val));
+
+  const adjustAvailable = async (p: Product, delta: number) => {
+    try {
+      const currentAvail = typeof p.available_qty === "number" ? p.available_qty : 0;
+      const newAvail = clamp(currentAvail + delta, 0, p.stock_qty);
+      if (newAvail === currentAvail) return; // no-op
+
+      const payload = {
+        name: p.name,
+        description: p.description,
+        price: p.price,
+        stock_qty: p.stock_qty,
+        available_qty: newAvail,
+        image: p.image,
+        sku: p.sku,
+      };
+      await updateProduct(p.id, payload);
+      await fetchProducts(); // refresh list
+    } catch (err) {
+      console.error("Failed to adjust available quantity:", err);
+      alert("Failed to update available quantity. Please try again.");
+    }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -280,7 +305,27 @@ const Stock = () => {
             <p className="text-white">{product.description}</p>
             <p className="font-bold mt-2 text-white">${product.price}</p>
             <p className="text-white">Stock Quantity: {product.stock_qty}</p>
-            <p className="text-white">Available Quantity: {product.available_qty}</p>
+            <div className="flex items-center justify-between mt-1">
+              <p className="text-white">Available Quantity: {product.available_qty}</p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => adjustAvailable(product, -1)}
+                  disabled={(product.available_qty ?? 0) <= 0}
+                  className="px-2 py-1 rounded bg-gray-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Decrease available quantity"
+                >
+                  -
+                </button>
+                <button
+                  onClick={() => adjustAvailable(product, +1)}
+                  disabled={(product.available_qty ?? 0) >= product.stock_qty}
+                  className="px-2 py-1 rounded bg-gray-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Increase available quantity"
+                >
+                  +
+                </button>
+              </div>
+            </div>
             <div className="flex justify-end mt-2">
               <button
                 onClick={() => handleEdit(product)}
