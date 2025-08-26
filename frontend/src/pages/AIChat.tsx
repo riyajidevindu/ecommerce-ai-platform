@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Helmet } from "react-helmet-async";
 import { getConversations, Conversation, Message } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -36,6 +37,11 @@ const AIChat = () => {
 
   return (
     <div className="p-4">
+      <Helmet>
+        <title>AI Conversations – AI Seller Assistant</title>
+        <meta name="description" content="Browse customer conversations handled by the AI agent." />
+        <link rel="canonical" href="/ai-chat" />
+      </Helmet>
       <h1 className="text-2xl font-bold mb-4 text-foreground">AI Conversations</h1>
       <Accordion type="single" collapsible className="w-full">
         {conversations.map((conversation) => (

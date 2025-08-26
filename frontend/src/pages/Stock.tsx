@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import {
   getProducts,
   createProduct,
@@ -182,6 +183,11 @@ const Stock = () => {
 
   return (
     <div className="container mx-auto p-4">
+      <Helmet>
+        <title>Stock Management – AI Seller Assistant</title>
+        <meta name="description" content="Manage your products, stock levels, and availability." />
+        <link rel="canonical" href="/stock" />
+      </Helmet>
       <h1 className="text-2xl font-bold mb-4 text-foreground">Stock Management</h1>
       <Button onClick={openModal} className="mb-4">Add Product</Button>
 
