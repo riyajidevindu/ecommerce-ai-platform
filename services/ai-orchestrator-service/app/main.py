@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from . import message_processor
 from .db.session import get_db, engine
 from .db.base import Base
-from .models import user, customer, message, product
+from .models import user, customer, message, product, conversation_state
 from .schemas.message import Conversation
 from .crud.message import get_conversations, get_unprocessed_messages
 from pydantic import BaseModel

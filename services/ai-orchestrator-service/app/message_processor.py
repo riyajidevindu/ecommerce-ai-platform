@@ -2,7 +2,9 @@ from . import gemini_client
 from .groq_client import generate_response as groq_generate_response
 from .db import get_db
 from sqlalchemy.orm import Session
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Dict
+import re
+from .crud import conversation_state as conv_state_crud
 from .crud.message import update_message_response
 from .crud.product import get_products_by_user_id
 from .models.message import Message
@@ -22,8 +24,9 @@ def _score_product_match(user_text: str, name: str, sku: Optional[str]) -> float
     n = (name or "").lower()
     s = (sku or "").lower()
 
+    # SKU may be business-internal; still treat presence as a strong hint if present in text
     if s and s in txt:
-        return 1.0
+        return 0.95
 
     score = 0.0
     if n:
@@ -53,6 +56,21 @@ def _find_best_product(user_text: str, products) -> Tuple[Optional[object], floa
             best, best_score = p, sc
     return best, best_score
 
+
+# Simple in-process conversational memory: customer_id -> last selected product_id
+_conversation_memory: Dict[int, int] = {}
+
+
+_PRONOUN_ONLY_RE = re.compile(r"\b(it|that|this|the one|same|above|the product)\b", re.I)
+_FOLLOW_UP_RE = re.compile(r"\b(price|cost|stock|quantity|available|in stock|how much|what about|details)\b", re.I)
+
+def _is_followup_about_same_product(user_text: str) -> bool:
+    if not user_text:
+        return False
+    txt = user_text.strip()
+    # If the message contains a follow-up keyword and pronoun-like references
+    return bool(_FOLLOW_UP_RE.search(txt)) and bool(_PRONOUN_ONLY_RE.search(txt))
+
 def process_message(channel, message: Message, db: Session, user_id: int):
     """
     Processes a single message and publishes the AI response.
@@ -74,18 +92,34 @@ def process_message(channel, message: Message, db: Session, user_id: int):
         # Agentic retrieval step: try to identify the specific product referenced.
         best, score = _find_best_product(message.user_message or "", products)
 
+        # Conversation memory assist: if the user likely refers to the same product as before,
+        # prefer the last one we selected for this customer.
+        chosen = None
+        if _is_followup_about_same_product(message.user_message or ""):
+            last_id = _conversation_memory.get(message.customer_id)
+            if last_id is None:
+                # Read from DB state when cache is cold
+                state = conv_state_crud.get_state(db, customer_id=message.customer_id)
+                last_id = state.last_product_id if state else None
+                if last_id is not None:
+                    _conversation_memory[message.customer_id] = last_id
+            if last_id is not None:
+                chosen = next((p for p in products if getattr(p, "id", None) == last_id), None)
+                score = max(score, 0.85) if chosen else score
+        if not chosen and best and score >= 0.7:
+            chosen = best
+
         def fmt(v):
             return "N/A" if v is None else v
 
-        if best and score >= 0.7:
-            # High confidence: present exact facts for that product only.
+        if chosen:
+            # High confidence or conversation-followup: present exact facts for that product only (no SKU exposure).
             facts = (
                 "You must answer using ONLY these facts; do not invent values.\n"
-                f"- Product name: {fmt(best.name)}\n"
-                f"- SKU: {fmt(best.sku)}\n"
-                f"- Price: {fmt(best.price)}\n"
-                f"- Available quantity: {fmt(best.available_qty)}\n"
-                f"- Total stock quantity: {fmt(best.stock_qty)}\n"
+                f"- Product name: {fmt(chosen.name)}\n"
+                f"- Price: {fmt(chosen.price)}\n"
+                f"- Available quantity: {fmt(chosen.available_qty)}\n"
+                f"- Total stock quantity: {fmt(chosen.stock_qty)}\n"
             )
             prompt = (
                 "You are a precise e-commerce assistant.\n"
@@ -95,11 +129,20 @@ def process_message(channel, message: Message, db: Session, user_id: int):
                 " If something is missing (N/A), say you don't have that information."
                 " Keep it concise and friendly."
             )
+            # Update conversation memory to selected product
+            try:
+                pid = getattr(chosen, "id", None)
+                if pid is not None:
+                    _conversation_memory[message.customer_id] = pid
+                    conv_state_crud.set_last_product(db, message.customer_id, pid)
+            except Exception:
+                pass
         elif products:
             # Low confidence: offer top options with exact facts and ask to clarify.
             top: List[object] = sorted(products, key=lambda p: _score_product_match(message.user_message or "", getattr(p, "name", None), getattr(p, "sku", None)), reverse=True)[:3]
+            # Do not expose SKU in customer-facing text
             listing = "\n".join([
-                f"- {fmt(p.name)} (SKU: {fmt(p.sku)}): price={fmt(p.price)}, available={fmt(p.available_qty)}, stock={fmt(p.stock_qty)}"
+                f"- {fmt(p.name)}: price={fmt(p.price)}, available={fmt(p.available_qty)}, stock={fmt(p.stock_qty)}"
                 for p in top
             ])
             prompt = (
@@ -107,7 +150,7 @@ def process_message(channel, message: Message, db: Session, user_id: int):
                 "We couldn't confidently identify a single product. Here are possible matches with facts.\n"
                 + listing + "\n\n"
                 f"Customer message: {message.user_message}\n\n"
-                "Ask the customer to confirm which product (by name or SKU) they mean, and only then provide exact details."
+                "Ask the customer to confirm which product (by name) they mean, and only then provide exact details."
             )
         else:
             prompt = (
