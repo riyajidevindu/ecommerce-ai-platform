@@ -10,6 +10,10 @@ import {
 import { apiClient } from "@/services/api";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter as DialogFtr, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 const Stock = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -179,124 +183,67 @@ const Stock = () => {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4 text-foreground">Stock Management</h1>
-      <button
-        onClick={openModal}
-        className=" bg-gray-600 text-white px-4 py-2 rounded mb-4"
-      >
-        Add Product
-      </button>
+      <Button onClick={openModal} className="mb-4">Add Product</Button>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <h3 className="text-lg font-bold">
-              {selectedProduct ? "Edit Product" : "Add Product"}
-            </h3>
-            <form onSubmit={handleSubmit} className="mt-4">
-              <div className="mt-2">
-                <label className="block text-sm font-medium text-gray-700">Product Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  placeholder="Name"
-                  className="w-full p-2 border rounded"
-                  required
-                />
+      <Dialog open={isModalOpen} onOpenChange={(open) => (open ? setIsModalOpen(true) : closeModal())}>
+        <DialogContent className="sm:max-w-xl bg-background text-foreground border border-border shadow-2xl">
+          <DialogHeader>
+            <DialogTitle>{selectedProduct ? "Edit Product" : "Add Product"}</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              {selectedProduct ? "Update the product details below." : "Fill in the details to add a new product."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="name">Product Name</Label>
+                <Input id="name" name="name" value={formData.name} onChange={handleInputChange} placeholder="Name" required className="bg-card text-foreground" />
               </div>
-              <div className="mt-2">
-                <label className="block text-sm font-medium text-gray-700">Description</label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  placeholder="Description"
-                  className="w-full p-2 border rounded"
-                ></textarea>
+
+              <div className="space-y-1">
+                <Label htmlFor="description">Description</Label>
+                <Textarea id="description" name="description" value={formData.description} onChange={handleInputChange} placeholder="Short description" className="bg-card text-foreground" />
               </div>
-              <div className="mt-2">
-                <label className="block text-sm font-medium text-gray-700">Price</label>
-                <input
-                  type="number"
-                  name="price"
-                  value={formData.price}
-                  onChange={handleInputChange}
-                  onWheel={(e) => e.currentTarget.blur()}
-                  placeholder="Price"
-                  className="w-full p-2 border rounded"
-                  required
-                />
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label htmlFor="price">Price</Label>
+                  <Input id="price" type="number" name="price" value={formData.price} onChange={handleInputChange} onWheel={(e) => e.currentTarget.blur()} placeholder="0.00" required className="bg-card text-foreground" />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="stock_qty">Stock Quantity</Label>
+                  <Input id="stock_qty" type="number" name="stock_qty" value={formData.stock_qty} onChange={handleInputChange} onWheel={(e) => e.currentTarget.blur()} placeholder="0" required className="bg-card text-foreground" />
+                </div>
               </div>
-              <div className="mt-2">
-                <label className="block text-sm font-medium text-gray-700">Stock Quantity</label>
-                <input
-                  type="number"
-                  name="stock_qty"
-                  value={formData.stock_qty}
-                  onChange={handleInputChange}
-                  onWheel={(e) => e.currentTarget.blur()}
-                  placeholder="Stock Quantity"
-                  className="w-full p-2 border rounded"
-                  required
-                />
-              </div>
+
               {selectedProduct && (
-                <div className="mt-2">
-                  <label className="block text-sm font-medium text-gray-700">Available Quantity</label>
-                  <input
-                    type="number"
-                    name="available_qty"
-                    value={formData.available_qty}
-                    onChange={handleInputChange}
-                    onWheel={(e) => e.currentTarget.blur()}
-                    placeholder="Available Quantity"
-                    className="w-full p-2 border rounded"
-                    required
-                  />
+                <div className="space-y-1">
+                  <Label htmlFor="available_qty">Available Quantity</Label>
+                  <Input id="available_qty" type="number" name="available_qty" value={formData.available_qty} onChange={handleInputChange} onWheel={(e) => e.currentTarget.blur()} placeholder="0" required className="bg-card text-foreground" />
                 </div>
               )}
-              <div className="mt-2">
-                <label className="block text-sm font-medium text-gray-700">SKU</label>
-                <input
-                  type="text"
-                  name="sku"
-                  value={formData.sku}
-                  onChange={handleInputChange}
-                  placeholder="SKU"
-                  className="w-full p-2 border rounded"
-                  required
-                />
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label htmlFor="sku">SKU</Label>
+                  <Input id="sku" name="sku" value={formData.sku} onChange={handleInputChange} placeholder="SKU" required className="bg-card text-foreground" />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="image">Image</Label>
+                  <Input id="image" type="file" onChange={handleFileChange} className="bg-card text-foreground file:text-foreground" />
+                  <p className="text-xs text-muted-foreground">PNG, JPG up to 2MB.</p>
+                </div>
               </div>
-              <div className="mt-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Image
-                </label>
-                <input
-                  type="file"
-                  onChange={handleFileChange}
-                  className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                />
-              </div>
-              <div className="flex justify-end mt-4">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="bg-gray-500 text-white px-4 py-2 rounded mr-2"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="bg-blue-500 text-white px-4 py-2 rounded"
-                >
-                  Save
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            </div>
+
+            <DialogFtr className="gap-2">
+              <Button type="button" variant="outline" onClick={closeModal}>Cancel</Button>
+              <Button type="submit">Save</Button>
+            </DialogFtr>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {products.map((product) => (
