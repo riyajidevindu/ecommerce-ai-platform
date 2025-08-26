@@ -7,6 +7,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { notifications } from "@mantine/notifications";
 import { Text } from "@mantine/core";
 import { useMemo } from "react";
+import CommandMenu from "@/components/common/CommandMenu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const Navbar = () => {
   const { isAuthenticated, logout } = useAuth();
@@ -68,15 +71,46 @@ const Navbar = () => {
         </div>
       )}
 
-  <div className="flex items-center gap-2">
-        <Button variant="outline" size="icon" aria-label="Notifications">
-          <Bell className="h-5 w-5 text-foreground" />
-        </Button>
+      <div className="flex items-center gap-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" aria-label="Notifications" className="relative">
+              <Bell className="h-5 w-5 text-foreground" />
+              {/* Unread indicator */}
+              <span className="absolute -top-0.5 -right-0.5 inline-flex h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-background" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-64">
+            <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate('/notifications')}>3 new messages</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/notifications')}>Low stock: Blue Hoodie</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/notifications')}>WhatsApp reconnected</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate('/notifications')} className="text-primary">View all</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <CommandMenu />
         <ThemeToggle />
         {isAuthenticated ? (
-          <Button variant="secondary" className="ml-1" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-2" /> Sign out
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary" className="ml-1">
+                <Avatar className="h-5 w-5 mr-2">
+                  <AvatarFallback>U</AvatarFallback>
+                </Avatar>
+                Account
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate("/settings")}>Settings</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                <LogOut className="h-4 w-4 mr-2" /> Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : (
           <NavLink to="/login">
             <Button variant="secondary" className="ml-1">
