@@ -31,6 +31,7 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true); // Set initial loading to true
+  const STORAGE_KEY = 'access_token';
 
   const getCookie = (name: string) => {
     const value = `; ${document.cookie}`;
@@ -41,15 +42,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const rehydrateSession = async () => {
       try {
+        // 1) Try restoring from session storage first (fast path)
+        const stored = sessionStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          setAuthToken(stored);
+          try {
+            const currentUser = await getCurrentUser();
+            setUser(currentUser);
+            return; // we're good
+          } catch (e) {
+            // token might be expired, fall back to refresh
+          }
+        }
+
+        // 2) Fall back to refresh token flow (requires HttpOnly cookie from server)
         const response = await apiClient.post<{ access_token: string }>('/api/v1/auth/refresh');
         const { access_token } = response.data;
         setAuthToken(access_token);
+        sessionStorage.setItem(STORAGE_KEY, access_token);
         const currentUser = await getCurrentUser();
         setUser(currentUser);
       } catch (error) {
-        // This is expected if the user doesn't have a valid refresh token
+        // This is expected if the user doesn't have a valid refresh token/cookie yet
         setUser(null);
         setAuthToken('');
+        sessionStorage.removeItem(STORAGE_KEY);
       } finally {
         setIsLoading(false);
       }
@@ -63,11 +80,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { access_token } = await apiLogin(username, password);
       setAuthToken(access_token);
+  sessionStorage.setItem(STORAGE_KEY, access_token);
       const currentUser = await getCurrentUser();
       setUser(currentUser);
     } catch (error) {
       setUser(null);
       setAuthToken('');
+  sessionStorage.removeItem(STORAGE_KEY);
       throw error;
     } finally {
       setIsLoading(false);
@@ -83,6 +102,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setUser(null);
       setAuthToken('');
+  sessionStorage.removeItem(STORAGE_KEY);
       setIsLoading(false);
     }
   };
@@ -91,11 +111,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     try {
       setAuthToken(token);
+  sessionStorage.setItem(STORAGE_KEY, token);
       const currentUser = await getCurrentUser();
       setUser(currentUser);
     } catch (error) {
       setUser(null);
       setAuthToken('');
+  sessionStorage.removeItem(STORAGE_KEY);
     } finally {
       setIsLoading(false);
     }

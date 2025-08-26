@@ -53,6 +53,10 @@ apiClient.interceptors.response.use(
         const response = await apiClient.post<{ access_token: string }>(refreshPath);
         const { access_token } = response.data;
         setAuthToken(access_token);
+        try {
+          // Best-effort: keep token across reloads if context isn't yet mounted
+          sessionStorage.setItem('access_token', access_token);
+        } catch {}
         originalRequest.headers.Authorization = `Bearer ${access_token}`;
         return apiClient(originalRequest);
       } catch (refreshError) {
