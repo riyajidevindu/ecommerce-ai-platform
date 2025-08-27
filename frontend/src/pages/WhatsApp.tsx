@@ -17,6 +17,7 @@ import { SettingsCard } from "@/components/whatsapp/SettingsCard";
 import { CustomersHeader } from "@/components/whatsapp/CustomersHeader";
 import { CustomersList } from "@/components/whatsapp/CustomersList";
 import { PaginationControls } from "@/components/whatsapp/PaginationControls";
+import { AnalyticsCard } from "@/components/whatsapp/AnalyticsCard";
 
 export default function WhatsApp() {
   const { theme } = useTheme();
@@ -237,12 +238,7 @@ export default function WhatsApp() {
           </TabsContent>
 
           <TabsContent value="analytics">
-            <Card>
-              <CardHeader>
-                <CardTitle>Analytics (coming soon)</CardTitle>
-                <CardDescription>We’re preparing charts and deeper insights. For now, use the summary in Customers.</CardDescription>
-              </CardHeader>
-            </Card>
+            <AnalyticsCard stats={Object.values(statsByNumber)} />
           </TabsContent>
         </Tabs>
       </motion.div>
