@@ -73,7 +73,7 @@ const AIChat = () => {
               />
             </div>
           </div>
-          <ScrollArea className="h-[calc(100%-header-height)]">
+          <ScrollArea className="flex-1 min-h-0">
             {filteredConversations.map((c) => {
               const fallbackId = c.messages?.[0]?.customer_id ? `customer:${c.messages[0].customer_id}` : undefined;
               const convKey = c.whatsapp_no || fallbackId || Math.random().toString(36).slice(2);
@@ -91,9 +91,9 @@ const AIChat = () => {
                     <AvatarImage src={`https://i.pravatar.cc/150?u=${avatarSeed}`} />
                     <AvatarFallback>{avatarFallback}</AvatarFallback>
                   </Avatar>
-                  <div className="ml-3 overflow-hidden">
+                  <div className="ml-3 overflow-hidden min-w-0">
                     <p className="font-semibold truncate">{displayName}</p>
-                    <p className="text-sm text-muted-foreground truncate">{c.first_message}</p>
+                    <p className="text-sm text-muted-foreground truncate break-words">{c.first_message}</p>
                   </div>
                 </div>
               </div>
@@ -112,16 +112,16 @@ const AIChat = () => {
                 </Avatar>
                 <h2 className="text-lg font-semibold ml-3">{selectedConversation.whatsapp_no || (selectedConversation.messages?.[0]?.customer_id ? `customer:${selectedConversation.messages[0].customer_id}` : 'Customer')}</h2>
               </div>
-              <ScrollArea className="flex-grow p-4">
+              <ScrollArea className="flex-1 min-h-0 p-4">
                 <div className="flex flex-col gap-4">
                   {selectedConversation.messages.map((message) => (
                     <div key={message.id} className="flex flex-col items-start">
-                      <div className="message-bubble user-message">
+                      <div className="message-bubble user-message break-words">
                         <p className="font-semibold mb-1">You</p>
                         <p>{message.user_message}</p>
                       </div>
                       {message.response_message && (
-                        <div className="message-bubble ai-message mt-2">
+                        <div className="message-bubble ai-message mt-2 break-words">
                           <p className="font-semibold mb-1">AI Assistant</p>
                           <p>{message.response_message}</p>
                         </div>

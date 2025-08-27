@@ -1,5 +1,5 @@
 .message-bubble {
-  @apply rounded-lg px-4 py-2 max-w-xs lg:max-w-md;
+  @apply rounded-lg px-4 py-2 max-w-[90%] sm:max-w-[80%] md:max-w-[70%];
 }
 
 .user-message {
@@ -16,12 +16,12 @@
 
 .chat-container {
   display: flex;
-  height: calc(100vh - 5rem); /* Adjust based on your header/footer height */
+  flex-direction: column;
+  height: 100%;
 }
 
 .sidebar {
-  flex: 0 0 320px; /* Sidebar width */
-  min-width: 250px; /* Minimum sidebar width */
+  flex: 0 0 auto;
   border-right: 1px solid hsl(var(--border));
   background-color: hsl(var(--background));
   display: flex;
@@ -33,4 +33,15 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .chat-container {
+    flex-direction: row;
+    height: calc(100vh - 4rem);
+  }
+  .sidebar {
+    flex: 0 0 320px;
+    min-width: 240px;
+  }
 }
