@@ -1,0 +1,36 @@
+.message-bubble {
+  @apply rounded-lg px-4 py-2 max-w-xs lg:max-w-md;
+}
+
+.user-message {
+  @apply bg-blue-500 text-white self-end;
+}
+
+.ai-message {
+  @apply bg-gray-200 text-gray-800 self-start;
+}
+
+.dark .ai-message {
+  @apply bg-gray-700 text-gray-200;
+}
+
+.chat-container {
+  display: flex;
+  height: calc(100vh - 5rem); /* Adjust based on your header/footer height */
+}
+
+.sidebar {
+  flex: 0 0 320px; /* Sidebar width */
+  min-width: 250px; /* Minimum sidebar width */
+  border-right: 1px solid hsl(var(--border));
+  background-color: hsl(var(--background));
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}

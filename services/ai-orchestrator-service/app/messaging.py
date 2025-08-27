@@ -145,18 +145,36 @@ def _handle_new_message(channel, data: dict):
         from .schemas.customer import CustomerCreate
         from .schemas.message import MessageBase
 
-        # Extract the tenant/user id once and pass it through.
+    # Extract the tenant/user id once and pass it through.
         user_id = message_data["user_id"]
 
         customer = customer_crud.get_customer(db, customer_id=message_data["customer_id"])
         if not customer:
             customer = customer_crud.create_customer(db, customer=CustomerCreate(
-                user_id=user_id
+                user_id=user_id,
+                whatsapp_no=message_data.get("whatsapp_no")
             ), customer_id=message_data["customer_id"])
+        else:
+            # Backfill whatsapp_no if missing or different
+            try:
+                incoming_no = message_data.get("whatsapp_no")
+                if incoming_no and getattr(customer, "whatsapp_no", None) != incoming_no:
+                    customer.whatsapp_no = incoming_no
+                    db.commit()
+                    db.refresh(customer)
+            except Exception:
+                pass
 
         message = message_crud.create_message(db, message=MessageBase(
             user_message=message_data["user_message"]
         ), customer_id=customer.id, message_id=message_data["id"])
+
+        # Best-effort: cache the customer's whatsapp number if provided by the producer
+        try:
+            from .phone_cache import set_whatsapp_no
+            set_whatsapp_no(customer.id, message_data.get("whatsapp_no"))
+        except Exception:
+            pass
 
         # Ensure the message is processed within the correct user scope
         message_processor.process_message(channel, message, db, user_id=user_id)

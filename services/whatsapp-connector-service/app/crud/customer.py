@@ -37,3 +37,6 @@ def get_connected_numbers_for_user(db: Session, user_id: int) -> list[str]:
 
 def count_customers_by_user(db: Session, user_id: int) -> int:
     return db.query(Customer).filter(Customer.user_id == user_id).count()
+
+def list_customers_by_user(db: Session, user_id: int) -> list[Customer]:
+    return db.query(Customer).filter(Customer.user_id == user_id).all()

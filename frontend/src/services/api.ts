@@ -237,14 +237,16 @@ export interface Message {
 }
 
 export interface Conversation {
-  whatsapp_no: string;
-  first_message: string;
+  whatsapp_no?: string | null;
+  first_message?: string | null;
   messages: Message[];
 }
 
-export const getConversations = async (): Promise<Conversation[]> => {
+export const getConversations = async (userId?: number): Promise<Conversation[]> => {
   try {
-    const response = await apiClient.get<Conversation[]>('/api/v1/ai/conversations');
+    const response = await apiClient.get<Conversation[]>('/api/v1/ai/conversations', {
+      params: userId ? { user_id: userId } : {},
+    });
     return response.data;
   } catch (error) {
     console.error('Error fetching conversations:', error);
