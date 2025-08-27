@@ -3,15 +3,11 @@
 }
 
 .user-message {
-  @apply bg-blue-500 text-white self-end;
+  @apply bg-primary text-primary-foreground self-end;
 }
 
 .ai-message {
-  @apply bg-gray-200 text-gray-800 self-start;
-}
-
-.dark .ai-message {
-  @apply bg-gray-700 text-gray-200;
+  @apply bg-muted text-foreground self-start border border-border;
 }
 
 .chat-container {

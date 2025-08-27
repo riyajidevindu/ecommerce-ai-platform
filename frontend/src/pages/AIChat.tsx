@@ -58,7 +58,7 @@ const AIChat = () => {
         <meta name="description" content="Browse customer conversations handled by the AI agent." />
         <link rel="canonical" href="/ai-chat" />
       </Helmet>
-      <div className="chat-container">
+  <div className="chat-container" style={{ color: "hsl(var(--foreground))" }}>
         {/* Sidebar */}
         <div className="sidebar">
           <div className="p-4 border-b">
@@ -110,7 +110,7 @@ const AIChat = () => {
                   <AvatarImage src={`https://i.pravatar.cc/150?u=${selectedConversation.whatsapp_no || 'customer'}`} />
                   <AvatarFallback>{(selectedConversation.whatsapp_no || 'CU').slice(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
-                <h2 className="text-lg font-semibold ml-3">{selectedConversation.whatsapp_no || (selectedConversation.messages?.[0]?.customer_id ? `customer:${selectedConversation.messages[0].customer_id}` : 'Customer')}</h2>
+                <h2 className="text-lg font-semibold ml-3 text-foreground">{selectedConversation.whatsapp_no || (selectedConversation.messages?.[0]?.customer_id ? `customer:${selectedConversation.messages[0].customer_id}` : 'Customer')}</h2>
               </div>
               <ScrollArea className="flex-1 min-h-0 p-4">
                 <div className="flex flex-col gap-4">
