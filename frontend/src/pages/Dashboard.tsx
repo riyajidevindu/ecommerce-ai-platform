@@ -62,7 +62,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
   <StatCard title="Recent Conversions" value={customerLoading ? "..." : String(customerCount)} />
-  <StatCard title="Total Stocks (Products / Units)" value={productsLoading ? "..." : `${totalProducts} / ${totalStockQty}`} />
+  <StatCard title="Total Products" value={productsLoading ? "..." : String(customerCount)} />
         <StatCard title="Conversions per Day" value="3.2%" />
       </div>
 
