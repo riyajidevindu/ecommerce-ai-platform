@@ -1,7 +1,6 @@
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Bell, LogIn, LogOut, ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { notifications } from "@mantine/notifications";
@@ -15,11 +14,7 @@ const Navbar = () => {
   const { isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const showSearchBar = [
-    "/stock", // Stock page
-    "/ai-chat",   // AI Chat page
-    "/notifications" // Notification page
-  ].includes(location.pathname);
+  // No global search bar on Stock, AI Chat, or Notifications pages.
 
   const pageTitle = useMemo(() => {
     // Map pathname to a human title
@@ -65,11 +60,7 @@ const Navbar = () => {
         </div>
       </div>
 
-      {showSearchBar && (
-        <div className="hidden md:flex items-center gap-3 w-[420px]">
-          <Input placeholder="Search..." className="w-full" />
-        </div>
-      )}
+  {/* Global search removed for these pages to avoid extra spacing */}
 
       <div className="flex items-center gap-2">
         <DropdownMenu>

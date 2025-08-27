@@ -11,7 +11,7 @@ interface CustomersListProps {
   height?: number;
 }
 
-export function CustomersList({ numbers, statsByNumber, copied, onCopy, height = 520 }: CustomersListProps) {
+export function CustomersList({ numbers, statsByNumber, copied, onCopy, height = 480 }: CustomersListProps) {
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -28,7 +28,7 @@ export function CustomersList({ numbers, statsByNumber, copied, onCopy, height =
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
       >
         {numbers.map((n) => (
           <CustomerCard key={n} number={n} stats={statsByNumber[n]} copied={copied} onCopy={onCopy} />

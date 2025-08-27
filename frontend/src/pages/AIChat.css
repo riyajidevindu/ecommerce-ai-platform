@@ -1,0 +1,43 @@
+.message-bubble {
+  @apply rounded-lg px-4 py-2 max-w-[90%] sm:max-w-[80%] md:max-w-[70%];
+}
+
+.user-message {
+  @apply bg-primary text-primary-foreground self-end;
+}
+
+.ai-message {
+  @apply bg-muted text-foreground self-start border border-border;
+}
+
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.sidebar {
+  flex: 0 0 auto;
+  border-right: 1px solid hsl(var(--border));
+  background-color: hsl(var(--background));
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .chat-container {
+    flex-direction: row;
+    height: calc(100vh - 4rem);
+  }
+  .sidebar {
+    flex: 0 0 320px;
+    min-width: 240px;
+  }
+}

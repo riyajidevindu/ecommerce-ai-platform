@@ -5,7 +5,7 @@ from app.crud import customer as customer_crud
 from app.crud import message as message_crud
 from app.crud import user as user_crud
 from app.crud import whatsapp as whatsapp_crud
-from app.schemas.customer import CustomerCreate
+from app.schemas.customer import CustomerCreate, Customer as CustomerSchema
 from app.schemas.message import MessageCreate
 from app.schemas.whatsapp import WhatsAppUser, WhatsAppUserCreate
 from app import messaging
@@ -133,3 +133,8 @@ def get_user_customers_count(user_id: int, db: Session = Depends(get_db)):
     """Return number of customers belonging to a specific user."""
     total = customer_crud.count_customers_by_user(db, user_id=user_id)
     return {"count": total}
+
+@router.get("/users/{user_id}/customers", response_model=list[CustomerSchema])
+def list_user_customers(user_id: int, db: Session = Depends(get_db)):
+    """Return the list of customers for a specific user."""
+    return customer_crud.list_customers_by_user(db, user_id=user_id)

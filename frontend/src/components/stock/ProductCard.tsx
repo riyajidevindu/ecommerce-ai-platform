@@ -24,10 +24,10 @@ export default function ProductCard({
 }) {
   const percent = product.stock_qty > 0 ? Math.round(((product.available_qty ?? 0) / product.stock_qty) * 100) : 0;
   return (
-    <Card className="overflow-hidden bg-card/70 backdrop-blur border-border hover:shadow-xl transition-all duration-200 hover:-translate-y-0.5">
+  <Card className="overflow-hidden bg-card/70 backdrop-blur border-border hover:shadow-xl transition-all duration-200 hover:-translate-y-0.5 max-w-full">
       <div className="relative">
         {getImageUrl(product.image) ? (
-          <img src={getImageUrl(product.image)} alt={product.name} className="w-full aspect-[16/9] object-cover" loading="lazy" />
+      <img src={getImageUrl(product.image)} alt={product.name} className="w-full aspect-[16/9] object-cover max-w-full" loading="lazy" />
         ) : (
           <div className="w-full aspect-[16/9] flex items-center justify-center bg-muted text-muted-foreground">
             <span>No image available</span>
@@ -51,7 +51,7 @@ export default function ProductCard({
       </CardHeader>
 
       <CardContent className="space-y-3">
-        <p className="text-sm text-muted-foreground h-10 overflow-hidden">
+        <p className="text-sm text-muted-foreground h-10 overflow-hidden break-words">
           {product.description || "No description provided."}
         </p>
         <div>
@@ -82,7 +82,7 @@ export default function ProductCard({
               +
             </Button>
           </div>
-          <div className="text-sm text-muted-foreground">SKU: {product.sku}</div>
+          <div className="text-sm text-muted-foreground truncate max-w-[50%] text-right" title={product.sku}>SKU: {product.sku}</div>
         </div>
       </CardContent>
 

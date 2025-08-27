@@ -3,6 +3,7 @@ from ..models.message import Message
 from ..schemas.message import MessageBase
 from ..models.customer import Customer
 from typing import List
+from ..phone_cache import get_whatsapp_no
 
 def create_message(db: Session, message: MessageBase, customer_id: int, message_id: int) -> Message:
     db_message = Message(
@@ -30,31 +31,42 @@ def update_message_response(db: Session, message_id: int, response_message: str)
         db.refresh(db_message)
     return db_message
 
-def get_conversations(db: Session) -> List[dict]:
-    conversations = (
-        db.query(Customer)
-        .options(joinedload(Customer.messages))
-        .all()
-    )
+def get_conversations(db: Session, user_id: int | None = None) -> List[dict]:
+    query = db.query(Customer).options(joinedload(Customer.messages))
+    if user_id is not None:
+        query = query.filter(Customer.user_id == user_id)
+    customers = query.all()
 
-    result = []
-    for customer in conversations:
-        if not customer.messages:
+    result: List[dict] = []
+    for customer in customers:
+        # Only include if there are messages with AI responses
+        msgs = [m for m in customer.messages if m.response_message is not None]
+        if not msgs:
             continue
 
-        first_message = customer.messages[0]
+        first_user_msg = next((m.user_message for m in customer.messages if m.user_message), None)
+        # TEMP: Use a stable identifier if phone is unknown; UI expects a string key
+        # Prefer persisted phone; then try cache; then fallback stable id
+        persisted_no = getattr(customer, "whatsapp_no", None)
+        cache_no = None
+        if not persisted_no:
+            try:
+                cache_no = get_whatsapp_no(customer.id)
+            except Exception:
+                cache_no = None
+
         result.append(
             {
-                "whatsapp_no": customer.whatsapp_no,
-                "first_message": first_message.user_message,
+                "whatsapp_no": persisted_no or cache_no or f"customer:{customer.id}",
+                "first_message": first_user_msg,
                 "messages": [
                     {
-                        "id": msg.id,
-                        "customer_id": msg.customer_id,
-                        "user_message": msg.user_message,
-                        "response_message": msg.response_message,
+                        "id": m.id,
+                        "customer_id": m.customer_id,
+                        "user_message": m.user_message,
+                        "response_message": m.response_message,
                     }
-                    for msg in customer.messages
+                    for m in msgs
                 ],
             }
         )

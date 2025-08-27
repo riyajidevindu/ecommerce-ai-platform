@@ -18,7 +18,7 @@ const Stock = () => {
   };
 
   return (
-    <div className="container mx-auto p-4">
+  <div className="container mx-auto p-4 max-w-full overflow-x-hidden">
       <Helmet>
         <title>Stock Management – AI Seller Assistant</title>
         <meta name="description" content="Manage your products, stock levels, and availability." />
@@ -72,7 +72,7 @@ const Stock = () => {
         </DialogContent>
       </Dialog>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {products.map((product) => (
           <ProductCard
             key={product.id}
