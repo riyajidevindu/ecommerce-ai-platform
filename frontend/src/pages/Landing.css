@@ -1,0 +1,10 @@
+.hero-gradient {
+  background: linear-gradient(45deg, hsl(var(--primary)), hsl(var(--primary) / 0.7));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.feature-card {
+  background-image: radial-gradient(circle, hsl(var(--primary) / 0.05) 1px, transparent 1px);
+  background-size: 1rem 1rem;
+}
