@@ -28,18 +28,18 @@ export function CustomerCard({ number, stats, copied, onCopy }: CustomerCardProp
       className="group rounded-lg border bg-card text-card-foreground shadow-sm transition-all hover:shadow-md"
       whileHover={{ y: -4 }}
     >
-      <div className="p-4 flex items-center justify-between">
-        <p className="font-semibold truncate text-lg" title={number}>{number}</p>
-        <Button size="icon" variant="ghost" className="h-8 w-8 flex-shrink-0" onClick={() => onCopy(number)} title="Copy number">
+      <div className="p-3 flex items-center justify-between">
+        <p className="font-semibold truncate text-base" title={number}>{number}</p>
+        <Button size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0" onClick={() => onCopy(number)} title="Copy number">
           {copied === number ? <Check className="h-5 w-5 text-emerald-500" /> : <Copy className="h-5 w-5" />}
         </Button>
       </div>
-      <div className="border-t p-4 grid grid-cols-3 gap-2 text-center">
+      <div className="border-t p-3 grid grid-cols-3 gap-2 text-center">
         {statItems.map((item, i) => (
           <div key={i}>
             <item.icon className="h-5 w-5 text-muted-foreground mx-auto mb-1" />
-            <p className="text-lg font-bold">{item.value}</p>
-            <p className="text-sm text-muted-foreground">{item.label}</p>
+            <p className="text-base font-bold">{item.value}</p>
+            <p className="text-xs text-muted-foreground">{item.label}</p>
           </div>
         ))}
       </div>

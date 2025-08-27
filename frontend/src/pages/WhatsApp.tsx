@@ -166,15 +166,15 @@ export default function WhatsApp() {
       </Helmet>
 
       {/* Hero header */}
-      <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-r from-emerald-600/10 via-emerald-500/5 to-transparent mb-6">
-        <div className="p-6 md:p-8">
-          <div className="flex items-center gap-3 mb-2">
+      <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-r from-emerald-600/10 via-emerald-500/5 to-transparent mb-4">
+        <div className="p-4 md:p-6">
+          <div className="flex items-center gap-2 mb-1.5">
             <div className="h-9 w-9 rounded-full bg-emerald-500/15 text-emerald-600 flex items-center justify-center">
               <Phone className="h-5 w-5" />
             </div>
-            <h1 className="text-2xl md:text-3xl font-display font-semibold text-foreground">WhatsApp Integration</h1>
+            <h1 className="text-xl md:text-2xl font-display font-semibold text-foreground">WhatsApp Integration</h1>
           </div>
-          <p className="text-sm text-muted-foreground">Connect your number and manage customers reaching you via WhatsApp.</p>
+          <p className="text-xs md:text-sm text-muted-foreground">Connect your number and manage customers reaching you via WhatsApp.</p>
         </div>
       </div>
 

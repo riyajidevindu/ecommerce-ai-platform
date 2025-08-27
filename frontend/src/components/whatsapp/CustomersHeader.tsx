@@ -24,30 +24,30 @@ export function CustomersHeader({ numQuery, setNumQuery, onRefresh, cnLoading, c
 
   return (
     <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-      <CardHeader>
+  <CardHeader className="p-5">
         <div className="flex items-start justify-between gap-4 flex-wrap md:flex-nowrap">
           <div>
-            <CardTitle>Customer Conversations</CardTitle>
-            <CardDescription>An overview of your WhatsApp customer interactions.</CardDescription>
+    <CardTitle className="text-lg">Customer Conversations</CardTitle>
+    <CardDescription className="text-sm">An overview of your WhatsApp customer interactions.</CardDescription>
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <Input
               placeholder="Search by number..."
               value={numQuery}
               onChange={(e) => setNumQuery(e.target.value)}
-              className="w-full sm:w-56"
+      className="w-full sm:w-48 text-sm"
             />
             <Button variant="outline" onClick={onRefresh} disabled={cnLoading} title="Refresh data">
-              <RefreshCcw className={`h-4 w-4 ${cnLoading ? "animate-spin" : ""}`} />
+      <RefreshCcw className={`h-4 w-4 ${cnLoading ? "animate-spin" : ""}`} />
             </Button>
           </div>
         </div>
-        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3">
           {stats.map((s, i) => (
-            <div key={i} className="bg-muted/50 rounded-lg p-4">
-              <s.icon className="h-6 w-6 text-muted-foreground mb-2" />
-              <div className="text-3xl font-bold">{s.value}</div>
-              <p className="text-sm text-muted-foreground">{s.label}</p>
+    <div key={i} className="bg-muted/50 rounded-lg p-3">
+      <s.icon className="h-5 w-5 text-muted-foreground mb-1.5" />
+      <div className="text-xl font-bold">{s.value}</div>
+      <p className="text-xs text-muted-foreground">{s.label}</p>
             </div>
           ))}
         </div>
