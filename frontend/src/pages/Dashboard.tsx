@@ -62,8 +62,8 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
   <StatCard title="Recent Conversions" value={customerLoading ? "..." : String(customerCount)} />
-  <StatCard title="Total Products" value={productsLoading ? "..." : String(customerCount)} />
-        <StatCard title="Conversions per Day" value="3.2%" />
+  <StatCard title="Total Products" value={productsLoading ? "..." : String(totalProducts)} />
+  <StatCard title="Out of Stocks" value={String(availableProductsData.filter(p => p.available === 0).length)} />
       </div>
 
       <Tabs defaultValue="interactions" className="space-y-4">
