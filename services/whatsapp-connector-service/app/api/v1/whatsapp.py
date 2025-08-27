@@ -27,6 +27,15 @@ def get_whatsapp_user(user_id: int, db: Session = Depends(get_db)):
 def create_or_update_whatsapp_user(user_id: int, whatsapp_user: WhatsAppUserCreate, db: Session = Depends(get_db)):
     return whatsapp_crud.create_or_update_whatsapp_user(db=db, user_id=user_id, whatsapp_user=whatsapp_user)
 
+@router.get("/user/{user_id}/connected-numbers", response_model=list[str])
+def list_connected_numbers(user_id: int, db: Session = Depends(get_db)):
+    numbers = customer_crud.get_connected_numbers_for_user(db, user_id=user_id)
+    return numbers
+
+@router.get("/user/{user_id}/message-stats")
+def list_message_stats(user_id: int, db: Session = Depends(get_db)):
+    return message_crud.get_message_stats_for_user(db, user_id=user_id)
+
 @router.get("/webhook")
 async def whatsapp_webhook_verify(request: Request):
     mode = request.query_params.get("hub.mode")
@@ -93,10 +102,13 @@ async def whatsapp_webhook(request: Request, db: Session = Depends(get_db)):
         # If metadata.phone_number_id was provided, your data model should map it to user
         raise HTTPException(status_code=404, detail="User not found for receiver number")
 
-    # Get or create the customer by sender's number
-    customer = customer_crud.get_customer_by_whatsapp_no(db, whatsapp_no=sender_number)
+    # Get or create the customer by sender's number, scoped to this user
+    customer = customer_crud.get_customer_by_whatsapp_no_for_user(db, user_id=matched_user.id, whatsapp_no=sender_number)
     if not customer:
-        customer = customer_crud.create_customer(db, customer=CustomerCreate(whatsapp_no=sender_number, user_id=matched_user.id))
+        customer = customer_crud.create_customer(
+            db,
+            customer=CustomerCreate(whatsapp_no=sender_number, user_id=matched_user.id),
+        )
 
     # Persist inbound message
     message = message_crud.create_message(db, message=MessageCreate(customer_id=customer.id, message=user_message))

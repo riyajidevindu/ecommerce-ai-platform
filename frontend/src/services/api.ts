@@ -281,3 +281,30 @@ export const createOrUpdateWhatsAppUser = async (
     throw error;
   }
 };
+
+export const getConnectedNumbers = async (userId: number): Promise<string[]> => {
+  try {
+    const response = await apiClient.get<string[]>(`/api/v1/whatsapp/user/${userId}/connected-numbers`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching connected numbers:', error);
+    throw error;
+  }
+};
+
+export interface MessageStatsRow {
+  whatsapp_no: string;
+  total: number;
+  ai: number;
+  customer: number;
+}
+
+export const getMessageStats = async (userId: number): Promise<MessageStatsRow[]> => {
+  try {
+    const response = await apiClient.get<MessageStatsRow[]>(`/api/v1/whatsapp/user/${userId}/message-stats`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching message stats:', error);
+    throw error;
+  }
+};
