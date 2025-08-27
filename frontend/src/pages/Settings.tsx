@@ -5,8 +5,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import ThemeToggle from "@/components/ThemeToggle";
+import { useAuth } from "@/contexts/AuthContext";
+import { useState, useEffect } from "react";
 
 export default function Settings() {
+  const { user, isLoading } = useAuth();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      setName(user.username || "");
+      setEmail(user.email || "");
+    }
+  }, [user]);
+
+  // Placeholder save handler (extend later to call profile update endpoint when available)
+  const handleSave = (e) => {
+    e.preventDefault();
+    // TODO: implement update profile API when backend route exists
+  };
+
   return (
     <div>
       <Helmet>
@@ -48,22 +67,49 @@ export default function Settings() {
           <CardHeader>
             <CardTitle>Profile</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" placeholder="Your name" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="you@example.com" />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="password">Change Password</Label>
-              <Input id="password" type="password" placeholder="New password" />
-            </div>
-            <div className="md:col-span-2 flex justify-end">
-              <Button>Save changes</Button>
-            </div>
+          <CardContent>
+            {isLoading ? (
+              <div className="text-sm text-muted-foreground">Loading profile...</div>
+            ) : !user ? (
+              <div className="text-sm text-muted-foreground">You are not logged in.</div>
+            ) : (
+              <form
+                onSubmit={handleSave}
+                className="grid grid-cols-1 md:grid-cols-2 gap-3"
+              >
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Your name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="password">Change Password</Label>
+                  <Input id="password" type="password" placeholder="New password" disabled />
+                  <p className="text-xs text-muted-foreground">
+                    Password change coming soon.
+                  </p>
+                </div>
+                <div className="md:col-span-2 flex justify-end">
+                  <Button type="submit" disabled>
+                    Save changes
+                  </Button>
+                </div>
+              </form>
+            )}
           </CardContent>
         </Card>
       </div>
