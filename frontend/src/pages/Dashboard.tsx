@@ -3,6 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AreaChart, Area, XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { motion } from "framer-motion";
+import { useProducts } from "@/hooks/useProducts";
+import { useCustomerCount } from "@/hooks/useCustomerCount";
+import { useAuth } from "@/contexts/AuthContext";
 
 const interactions = [
   { name: "Mon", value: 120 },
@@ -37,6 +40,13 @@ const StatCard = ({ title, value }: { title: string; value: string }) => (
 );
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  const { products, loading: productsLoading } = useProducts();
+  const totalProducts = products.length;
+  const { count: customerCount, loading: customerLoading } = useCustomerCount(user?.id);
+  // If instead you want total stock quantity across products, you could use:
+  // const totalStockQty = products.reduce((sum, p) => sum + (p.stock_qty || 0), 0);
+
   return (
     <div>
       <Helmet>
@@ -48,9 +58,9 @@ export default function Dashboard() {
       <h1 className="text-2xl md:text-3xl font-display font-semibold mb-6 text-foreground">Dashboard</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <StatCard title="Recent Messages" value="128" />
-        <StatCard title="Stock Alerts" value="5" />
-        <StatCard title="Conversion Rate" value="3.2%" />
+  <StatCard title="Recent Messages" value={customerLoading ? "..." : String(customerCount)} />
+        <StatCard title="Total Stocks" value={productsLoading ? "..." : String(totalProducts)} />
+        <StatCard title="Conversion Rate per Day" value="3.2%" />
       </div>
 
       <Tabs defaultValue="interactions" className="space-y-4">

@@ -5,12 +5,10 @@ from app.crud import customer as customer_crud
 from app.crud import message as message_crud
 from app.crud import user as user_crud
 from app.crud import whatsapp as whatsapp_crud
-from app.schemas import user as user_schema
 from app.schemas.customer import CustomerCreate
 from app.schemas.message import MessageCreate
 from app.schemas.whatsapp import WhatsAppUser, WhatsAppUserCreate
 from app import messaging
-import requests
 from app.config import WHATSAPP_VERIFY_TOKEN
 from fastapi.responses import PlainTextResponse
 
@@ -117,3 +115,9 @@ async def whatsapp_webhook(request: Request, db: Session = Depends(get_db)):
 @router.post("/webhook/")
 async def whatsapp_webhook_slash(request: Request, db: Session = Depends(get_db)):
     return await whatsapp_webhook(request, db)
+
+@router.get("/users/{user_id}/customers/count")
+def get_user_customers_count(user_id: int, db: Session = Depends(get_db)):
+    """Return number of customers belonging to a specific user."""
+    total = customer_crud.count_customers_by_user(db, user_id=user_id)
+    return {"count": total}

@@ -11,3 +11,6 @@ def create_customer(db: Session, customer: CustomerCreate):
     db.commit()
     db.refresh(db_customer)
     return db_customer
+
+def count_customers_by_user(db: Session, user_id: int) -> int:
+    return db.query(Customer).filter(Customer.user_id == user_id).count()
