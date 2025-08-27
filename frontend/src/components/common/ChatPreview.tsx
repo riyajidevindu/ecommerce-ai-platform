@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './ChatPreview.css';
 
@@ -13,13 +13,6 @@ const messages = [
 export function ChatPreview() {
   const [currentMessages, setCurrentMessages] = useState<Omit<typeof messages[0], 'delay'>[]>([]);
   const [isTyping, setIsTyping] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [currentMessages, isTyping]);
 
   useEffect(() => {
     setCurrentMessages([]);
@@ -30,6 +23,7 @@ export function ChatPreview() {
         // After all messages, restart the animation
         setTimeout(() => {
           setCurrentMessages([]);
+          setIsTyping(false);
           showMessage(0);
         }, 3000);
         return;
@@ -59,34 +53,40 @@ export function ChatPreview() {
   }, []);
 
   return (
-    <div ref={scrollRef} className="w-full max-w-md h-96 bg-background border rounded-2xl p-4 flex flex-col gap-4 overflow-y-auto shadow-2xl">
-      <AnimatePresence>
-        {currentMessages.map((msg, i) => (
+    <div className="w-full max-w-lg h-[25rem] bg-background border rounded-2xl p-4 flex flex-col gap-4 overflow-hidden shadow-2xl">
+      <motion.div
+        animate={{ y: -currentMessages.length * 20 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        className="flex flex-col"
+      >
+        <AnimatePresence>
+          {currentMessages.map((msg, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className={`chat-bubble ${msg.sender === 'user' ? 'user-bubble' : 'ai-bubble'}`}
+            >
+              {msg.text}
+            </motion.div>
+          ))}
+        </AnimatePresence>
+        {isTyping && (
           <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className={`chat-bubble ${msg.sender === 'user' ? 'user-bubble' : 'ai-bubble'}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="typing-indicator"
           >
-            {msg.text}
+            <div className="flex items-center gap-1">
+              <span className="h-2 w-2 bg-muted-foreground/50 rounded-full animate-bounce" />
+              <span className="h-2 w-2 bg-muted-foreground/50 rounded-full animate-bounce delay-75" />
+              <span className="h-2 w-2 bg-muted-foreground/50 rounded-full animate-bounce delay-150" />
+            </div>
           </motion.div>
-        ))}
-      </AnimatePresence>
-      {isTyping && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="ai-bubble self-start"
-        >
-          <div className="flex items-center gap-1">
-            <span className="h-2 w-2 bg-muted-foreground/50 rounded-full animate-bounce" />
-            <span className="h-2 w-2 bg-muted-foreground/50 rounded-full animate-bounce delay-75" />
-            <span className="h-2 w-2 bg-muted-foreground/50 rounded-full animate-bounce delay-150" />
-          </div>
-        </motion.div>
-      )}
+        )}
+      </motion.div>
     </div>
   );
 }

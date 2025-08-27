@@ -3,6 +3,7 @@
   border-radius: 1.25rem;
   max-width: 80%;
   word-wrap: break-word;
+  margin-bottom: 0.5rem;
 }
 
 .user-bubble {
@@ -16,5 +17,9 @@
   background-color: hsl(var(--muted));
   color: hsl(var(--muted-foreground));
   border-bottom-left-radius: 0.25rem;
+  align-self: flex-start;
+}
+
+.typing-indicator {
   align-self: flex-start;
 }
