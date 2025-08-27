@@ -21,7 +21,7 @@ export default function Notifications() {
   }, [status, category]);
 
   return (
-    <div>
+    <div style={{ color: "hsl(var(--foreground))" }}>
       <Helmet>
         <title>Notifications – AI Seller Assistant</title>
         <meta name="description" content="View system notifications and alerts." />
@@ -50,12 +50,12 @@ export default function Notifications() {
         </Select>
       </div>
 
-      <div className="space-y-3">
+    <div className="space-y-3">
         {filtered.map((n) => (
-          <Card key={n.id}>
+      <Card key={n.id}>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">{n.title}</CardTitle>
-              <Badge variant="secondary">{n.category}</Badge>
+        <CardTitle className="text-base text-foreground">{n.title}</CardTitle>
+        <Badge variant="secondary" className="capitalize">{n.category}</Badge>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">{n.read ? "Read" : "Unread"}</p>
