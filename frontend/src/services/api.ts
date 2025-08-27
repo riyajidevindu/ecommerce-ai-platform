@@ -308,3 +308,14 @@ export const getMessageStats = async (userId: number): Promise<MessageStatsRow[]
     throw error;
   }
 };
+
+// Customers (WhatsApp service)
+export const getCustomersCount = async (userId: number): Promise<number> => {
+  try {
+    const response = await apiClient.get<{ count: number }>(`/api/v1/whatsapp/users/${userId}/customers/count`);
+    return response.data.count;
+  } catch (error) {
+    console.error('Error fetching customers count:', error);
+    throw error;
+  }
+};
