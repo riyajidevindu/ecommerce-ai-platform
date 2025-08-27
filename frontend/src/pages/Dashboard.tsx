@@ -84,12 +84,12 @@ export default function Dashboard() {
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={availableProductsData} layout="horizontal">
-                    <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" interval={0} angle={-25} textAnchor="end" height={70} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" />
+                    <XAxis dataKey="name" stroke="hsl(var(--chart-axis))" interval={0} angle={-25} textAnchor="end" height={70} />
+                    <YAxis stroke="hsl(var(--chart-axis))" />
                     <RTooltip />
                     <Legend />
-                    <Bar dataKey="stock" name="Stock Qty" fill="#ef4444" radius={[6,6,0,0]} />
-                    <Bar dataKey="available" name="Available Qty" fill="#22c55e" radius={[6,6,0,0]} />
+                    <Bar dataKey="stock" name="Stock Qty" fill={"hsl(var(--chart-bar-1))"} radius={[6,6,0,0]} />
+                    <Bar dataKey="available" name="Available Qty" fill={"hsl(var(--chart-bar-2))"} radius={[6,6,0,0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -104,10 +104,10 @@ export default function Dashboard() {
             <CardContent className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={sales}>
-                  <XAxis dataKey="name" stroke="#e3f21aff" />
-                  <YAxis stroke="#10ad1aff" />
+                  <XAxis dataKey="name" stroke="hsl(var(--chart-axis))" />
+                  <YAxis stroke="hsl(var(--chart-axis))" />
                   <RTooltip />
-                  <Bar dataKey="value" fill="#22c55e" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="value" fill={"hsl(var(--chart-bar-2))"} radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
