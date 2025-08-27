@@ -166,6 +166,7 @@ export interface Product {
   available_qty?: number;
   image: string;
   sku: string;
+  owner_id?: number; // added for client-side filtering/safety
 }
 
 export const getProducts = async (): Promise<Product[]> => {
