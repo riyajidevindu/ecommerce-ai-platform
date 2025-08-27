@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, MessageSquare, Bot, Send } from "lucide-react";
 import { MessageStatsRow } from "@/services/api";
+import { motion } from "framer-motion";
 
 interface CustomerCardProps {
   number: string;
@@ -10,19 +11,38 @@ interface CustomerCardProps {
 }
 
 export function CustomerCard({ number, stats, copied, onCopy }: CustomerCardProps) {
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  };
+
+  const statItems = [
+    { icon: MessageSquare, label: "Total", value: stats?.total ?? 0 },
+    { icon: Bot, label: "AI", value: stats?.ai ?? 0 },
+    { icon: Send, label: "Sent", value: stats?.customer ?? 0 },
+  ];
+
   return (
-    <div className="group rounded-lg border border-border bg-card/70 backdrop-blur p-4 hover:shadow-lg transition-all">
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <div className="truncate font-medium text-foreground" title={number}>{number}</div>
-        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onCopy(number)} title="Copy number">
-          {copied === number ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+    <motion.div
+      variants={cardVariants}
+      className="group rounded-lg border bg-card text-card-foreground shadow-sm transition-all hover:shadow-md"
+      whileHover={{ y: -4 }}
+    >
+      <div className="p-4 flex items-center justify-between">
+        <p className="font-semibold truncate text-lg" title={number}>{number}</p>
+        <Button size="icon" variant="ghost" className="h-8 w-8 flex-shrink-0" onClick={() => onCopy(number)} title="Copy number">
+          {copied === number ? <Check className="h-5 w-5 text-emerald-500" /> : <Copy className="h-5 w-5" />}
         </Button>
       </div>
-      <div className="flex items-center gap-2 text-xs">
-        <span className="px-2 py-1 rounded-full bg-muted text-foreground">Total {stats?.total ?? 0}</span>
-        <span className="px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-700">AI {stats?.ai ?? 0}</span>
-        <span className="px-2 py-1 rounded-full bg-blue-500/15 text-blue-700">Sent {stats?.customer ?? 0}</span>
+      <div className="border-t p-4 grid grid-cols-3 gap-2 text-center">
+        {statItems.map((item, i) => (
+          <div key={i}>
+            <item.icon className="h-5 w-5 text-muted-foreground mx-auto mb-1" />
+            <p className="text-lg font-bold">{item.value}</p>
+            <p className="text-sm text-muted-foreground">{item.label}</p>
+          </div>
+        ))}
       </div>
-    </div>
+    </motion.div>
   );
 }

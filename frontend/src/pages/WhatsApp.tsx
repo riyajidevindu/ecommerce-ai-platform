@@ -178,12 +178,24 @@ export default function WhatsApp() {
       </div>
 
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-        <Tabs defaultValue="customers" className="w-full">
+        <Tabs defaultValue="settings" className="w-full">
           <TabsList className="mb-4">
-            <TabsTrigger value="customers">Customers</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
+            <TabsTrigger value="customers">Customers</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="settings">
+            <SettingsCard
+              error={error}
+              isLoading={isLoading}
+              whatsappNo={whatsappNo}
+              phoneNumberId={phoneNumberId}
+              setWhatsappNo={setWhatsappNo}
+              setPhoneNumberId={setPhoneNumberId}
+              onSave={handleSave}
+            />
+          </TabsContent>
 
           <TabsContent value="customers">
             <Card>
@@ -222,18 +234,6 @@ export default function WhatsApp() {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
-
-          <TabsContent value="settings">
-            <SettingsCard
-              error={error}
-              isLoading={isLoading}
-              whatsappNo={whatsappNo}
-              phoneNumberId={phoneNumberId}
-              setWhatsappNo={setWhatsappNo}
-              setPhoneNumberId={setPhoneNumberId}
-              onSave={handleSave}
-            />
           </TabsContent>
 
           <TabsContent value="analytics">
