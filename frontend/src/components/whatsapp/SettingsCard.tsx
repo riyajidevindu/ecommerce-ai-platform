@@ -19,28 +19,30 @@ export function SettingsCard({ error, isLoading, whatsappNo, phoneNumberId, setW
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
       <Card>
-        <CardHeader>
-          <CardTitle>WhatsApp Configuration</CardTitle>
-          <CardDescription>Connect your WhatsApp account to enable AI-powered messaging.</CardDescription>
+        <CardHeader className="p-6">
+          <CardTitle className="text-2xl">WhatsApp Configuration</CardTitle>
+          <CardDescription className="text-base">
+            Connect your WhatsApp account to enable AI-powered messaging.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-4">
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-12 p-6">
+          <div className="space-y-6">
             {error && (
               <Alert variant="destructive">
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
+                <AlertTitle className="text-lg">Error</AlertTitle>
+                <AlertDescription className="text-base">{error}</AlertDescription>
               </Alert>
             )}
             {!whatsappNo && !isLoading && (
               <Alert>
-                <AlertTitle>Action Required</AlertTitle>
-                <AlertDescription>
+                <AlertTitle className="text-lg">Action Required</AlertTitle>
+                <AlertDescription className="text-base">
                   Please enter your WhatsApp number to activate the integration.
                 </AlertDescription>
               </Alert>
             )}
             <div>
-              <Label htmlFor="whatsapp-no" className="text-base font-medium">WhatsApp Number</Label>
+              <Label htmlFor="whatsapp-no" className="text-lg font-medium">WhatsApp Number</Label>
               <Input
                 id="whatsapp-no"
                 type="text"
@@ -48,12 +50,12 @@ export function SettingsCard({ error, isLoading, whatsappNo, phoneNumberId, setW
                 onChange={(e) => setWhatsappNo(e.target.value)}
                 placeholder="e.g., +1234567890"
                 disabled={isLoading}
-                className="mt-1 text-base"
+                className="mt-2 text-lg p-4"
               />
-              <p className="text-sm text-muted-foreground mt-1">Must be in E.164 format.</p>
+              <p className="text-base text-muted-foreground mt-2">Must be in E.164 format.</p>
             </div>
             <div>
-              <Label htmlFor="phone-id" className="text-base font-medium">Phone Number ID (Optional)</Label>
+              <Label htmlFor="phone-id" className="text-lg font-medium">Phone Number ID (Optional)</Label>
               <Input
                 id="phone-id"
                 type="text"
@@ -61,19 +63,19 @@ export function SettingsCard({ error, isLoading, whatsappNo, phoneNumberId, setW
                 onChange={(e) => setPhoneNumberId(e.target.value)}
                 placeholder="Enter your Phone Number ID"
                 disabled={isLoading}
-                className="mt-1 text-base"
+                className="mt-2 text-lg p-4"
               />
-              <p className="text-sm text-muted-foreground mt-1">Needed for webhook verification. Leave blank if you're not sure.</p>
+              <p className="text-base text-muted-foreground mt-2">Needed for webhook verification. Leave blank if you're not sure.</p>
             </div>
             <div>
-              <Button onClick={onSave} disabled={isLoading} className="w-full md:w-auto text-base">
+              <Button onClick={onSave} disabled={isLoading} className="w-full md:w-auto text-lg p-6">
                 {isLoading ? "Saving..." : "Save Configuration"}
               </Button>
             </div>
           </div>
-          <div className="bg-muted/50 rounded-lg p-6">
-            <h3 className="text-xl font-semibold mb-2">Setup Instructions</h3>
-            <ol className="list-decimal list-inside space-y-2 text-base text-muted-foreground">
+          <div className="bg-muted/50 rounded-lg p-8">
+            <h3 className="text-2xl font-semibold mb-4">Setup Instructions</h3>
+            <ol className="list-decimal list-inside space-y-4 text-lg text-muted-foreground">
               <li>Enter your WhatsApp Business phone number in the E.164 format.</li>
               <li>(Optional) Provide the Phone Number ID from your Meta Developer dashboard.</li>
               <li>Click "Save Configuration" to connect your account.</li>
