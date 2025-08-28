@@ -5,7 +5,7 @@ import { XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer, BarChart, Bar, 
 import { motion } from "framer-motion";
 import { useProducts } from "@/hooks/useProducts";
 import { useCustomerCount } from "@/hooks/useCustomerCount";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/useAuth";
 
 // interactions dataset removed – replaced by dynamic available products data
 
