@@ -60,6 +60,29 @@ def _handle_user_created(data: dict):
     finally:
         db.close()
 
+def _handle_user_updated(data: dict):
+    user_data = data.get("user")
+    if not user_data:
+        logger.warning("No user data in user_updated event")
+        return
+    db: Session = SessionLocal()
+    try:
+        existing_user = user_crud.get_user(db, user_id=user_data["id"])
+        if existing_user:
+            # Only 'name' field is stored locally representing username
+            if "username" in user_data and user_data["username"] and existing_user.name != user_data["username"]:
+                existing_user.name = user_data["username"]
+                db.commit()
+                db.refresh(existing_user)
+                logger.info(f"User {user_data['username']} updated in ai-orchestrator-service.")
+        else:
+            # Backfill create if missed
+            user = UserCreate(id=user_data["id"], name=user_data.get("username", "unknown"))
+            user_crud.create_user(db, user=user)
+            logger.info(f"User {user_data['username']} backfilled during update event in ai-orchestrator-service.")
+    finally:
+        db.close()
+
 def _handle_product_created(data: dict):
     product_data = data.get("product")
     if not product_data:
@@ -183,6 +206,7 @@ def _handle_new_message(channel, data: dict):
 
 EVENT_HANDLERS = {
     "user_created": _handle_user_created,
+    "user_updated": _handle_user_updated,
     "product_created": _handle_product_created,
     "product_updated": _handle_product_updated,
     "product_deleted": _handle_product_deleted,

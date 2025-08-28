@@ -159,6 +159,11 @@ export const updateCurrentUser = async (
     const response = await apiClient.patch<UserResponse>('/api/v1/users/me', data);
     return response.data;
   } catch (error) {
+    // If method not allowed (405) fallback to PUT (some proxies may block PATCH)
+    if (error?.response?.status === 405) {
+      const resp2 = await apiClient.put<UserResponse>('/api/v1/users/me', data);
+      return resp2.data;
+    }
     console.error('Error updating current user:', error);
     throw error;
   }
