@@ -93,3 +93,5 @@ k8s/overlays/**/secrets.env
 # Local kubeconfig written during Jenkins or manual runs
 /kubeconfig
 kubeconfig-local.yaml
+kubeconfig-jenkins.yaml
+kubeconfig-host.yaml
