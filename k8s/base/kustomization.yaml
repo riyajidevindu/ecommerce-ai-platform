@@ -5,11 +5,10 @@ namespace: ecommerce
 
 resources:
   - ns.yaml
-  - cluster-issuer.yaml
-  - certificate.yaml
   - traefik-middleware-redirect.yaml
   - traefik-ingress.yaml
   - traefik-ingress-http.yaml
+  - network-policies.yaml
   # Use a single ingress with full prefixed paths; disable per-service ingresses and strip middlewares to avoid route conflicts
   - postgres-headless-alias.yaml
   - rabbitmq.yaml
