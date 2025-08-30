@@ -46,9 +46,8 @@ pipeline {
       steps {
         script {
           // Fetch kubeconfig only for CD
-          withCredentials([string(credentialsId: 'kubeconfig-local', variable: 'KUBECONFIG_CONTENT')]) {
-            writeFile file: 'kubeconfig', text: KUBECONFIG_CONTENT
-            env.KUBECONFIG = pwd() + '/kubeconfig'
+          withCredentials([file(credentialsId: 'kubeconfig-local', variable: 'KUBECONFIG_FILE')]) {
+            env.KUBECONFIG = KUBECONFIG_FILE
             sh "kubectl apply -k k8s/overlays/local-main"
           }
         }
