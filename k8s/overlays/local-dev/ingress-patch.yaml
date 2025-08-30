@@ -1,0 +1,11 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ecommerce-ingress
+spec:
+  tls:
+    - hosts:
+        - api.chat-ai-store.local
+      secretName: api-chat-ai-store-local-tls
+  rules:
+    - host: api.chat-ai-store.local

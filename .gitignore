@@ -81,3 +81,15 @@ frontend/*.ntvs*
 frontend/*.njsproj
 frontend/*.sln
 frontend/*.sw?
+
+# Kubernetes local secrets and certs
+k8s/overlays/**/secrets.env
+!k8s/overlays/**/secrets.env.example
+
+# mkcert-generated local TLS certs
+/api.chat-ai-store.local.pem
+/api.chat-ai-store.local-key.pem
+
+# Local kubeconfig written during Jenkins or manual runs
+/kubeconfig
+kubeconfig-local.yaml
