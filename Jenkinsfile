@@ -4,8 +4,6 @@ pipeline {
     REGISTRY = 'docker.io/riyaji'
     // Set by Jenkins credentials
     DOCKERHUB = credentials('dockerhub-cred')
-    // Kubeconfig content credential (secret text) or use Kubernetes plugin
-    KUBECONFIG_CONTENT = credentials('kubeconfig-local')
   }
   options {
     timestamps()
@@ -18,9 +16,6 @@ pipeline {
     stage('Prepare') {
       steps {
         script {
-          // Write kubeconfig so kubectl works in later steps
-          writeFile file: 'kubeconfig', text: KUBECONFIG_CONTENT
-          env.KUBECONFIG = pwd() + '/kubeconfig'
           env.IMAGE_TAG = (env.BRANCH_NAME == 'local-main') ? 'main' : 'dev'
         }
       }
@@ -47,11 +42,16 @@ pipeline {
         }
       }
     }
-    stage('Deploy to K8s') {
+    stage('Deploy to K8s (CD)') {
+      when { branch 'local-main' }
       steps {
         script {
-          def overlay = (env.BRANCH_NAME == 'local-main') ? 'k8s/overlays/local-main' : 'k8s/overlays/local-dev'
-          sh "kubectl apply -k ${overlay}"
+          // Fetch kubeconfig only for CD
+          withCredentials([string(credentialsId: 'kubeconfig-local', variable: 'KUBECONFIG_CONTENT')]) {
+            writeFile file: 'kubeconfig', text: KUBECONFIG_CONTENT
+            env.KUBECONFIG = pwd() + '/kubeconfig'
+            sh "kubectl apply -k k8s/overlays/local-main"
+          }
         }
       }
     }
