@@ -45,8 +45,12 @@ pipeline {
       when { branch 'local-main' }
       steps {
         script {
-          // Fetch kubeconfig only for CD
-          withCredentials([file(credentialsId: 'kubeconfig-local', variable: 'KUBECONFIG_FILE')]) {
+          // Fetch kubeconfig and write secrets.env for kustomize
+          withCredentials([
+            file(credentialsId: 'kubeconfig-local', variable: 'KUBECONFIG_FILE'),
+            string(credentialsId: 'platform-secrets-local-main', variable: 'SECRETS_ENV')
+          ]) {
+            writeFile file: 'k8s/overlays/local-main/secrets.env', text: SECRETS_ENV
             env.KUBECONFIG = KUBECONFIG_FILE
             sh "kubectl apply -k k8s/overlays/local-main"
           }
