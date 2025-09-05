@@ -52,7 +52,7 @@ pipeline {
           ]) {
             writeFile file: 'k8s/overlays/local-main/secrets.env', text: SECRETS_ENV
             env.KUBECONFIG = KUBECONFIG_FILE
-            sh "kubectl apply -k k8s/overlays/local-main --validate=false"
+            sh "kubectl apply -k k8s/overlays/local-main"
           }
         }
       }
