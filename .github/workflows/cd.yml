@@ -81,6 +81,11 @@ jobs:
         with:
           version: v1.30.0
 
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.4
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -94,6 +99,31 @@ jobs:
       - name: Update kubeconfig
         run: |
           aws eks update-kubeconfig --region $AWS_REGION --name ${{ secrets.EKS_CLUSTER_NAME }}
+
+      - name: Install/upgrade cert-manager (CRDs + controller)
+        run: |
+          set -e
+          CM_VER=v1.15.3
+          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/${CM_VER}/cert-manager.crds.yaml
+          helm repo add jetstack https://charts.jetstack.io
+          helm repo update
+          helm upgrade --install cert-manager jetstack/cert-manager \
+            --namespace cert-manager \
+            --create-namespace \
+            --version ${CM_VER}
+          kubectl -n cert-manager rollout status deploy/cert-manager --timeout=5m
+          kubectl -n cert-manager rollout status deploy/cert-manager-webhook --timeout=5m
+          kubectl -n cert-manager rollout status deploy/cert-manager-cainjector --timeout=5m
+
+      - name: Install/upgrade Traefik Ingress Controller
+        run: |
+          set -e
+          helm repo add traefik https://traefik.github.io/charts
+          helm repo update
+          helm upgrade --install traefik traefik/traefik \
+            --namespace traefik \
+            --create-namespace
+          kubectl -n traefik rollout status deploy/traefik --timeout=5m
 
       - name: Login to ECR (for registry URL)
         id: login-ecr
