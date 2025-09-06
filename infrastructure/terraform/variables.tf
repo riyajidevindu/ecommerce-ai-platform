@@ -91,8 +91,7 @@ variable "ecr_repositories" {
 		"whatsapp-connector-service",
 		"ai-orchestrator-service",
 		"notification-service",
-		"file-storage-service",
-		"frontend",
+		"file-storage-service"
 	]
 }
 
@@ -103,9 +102,9 @@ variable "create_rds" {
 }
 
 variable "rds_engine_version" {
-	description = "RDS engine version"
+	description = "RDS engine version (leave empty to use AWS default/latest available)"
 	type        = string
-	default     = "15.5"
+	default     = ""
 }
 
 variable "rds_instance_class" {
@@ -156,10 +155,10 @@ variable "rds_password_secret_json_key" {
 	default     = "password"
 }
 
-variable "rds_db_name" {
-	description = "Initial database name"
-	type        = string
-	default     = "appdb"
+variable "rds_db_names" {
+	description = "A list of initial database names to create"
+	type        = list(string)
+	default     = ["auth_db", "stock_db", "whatsapp_db", "notification_db", "file_storage_db"]
 }
 
 variable "create_frontend_cdn" {

@@ -1,6 +1,6 @@
 name               = "ecommerce-ai"
 region             = "ap-south-1"
-cluster_name       = "ecommerce-ai-eks"
+cluster_name       = "ecommerce-eks-cluster"
 kubernetes_version = "1.29"
 
 # Use slightly larger instances for higher pod density
@@ -16,6 +16,16 @@ azs             = ["ap-south-1a", "ap-south-1b"]
 public_subnets  = ["10.0.0.0/24", "10.0.1.0/24"]
 private_subnets = ["10.0.10.0/24", "10.0.11.0/24"]
 
-# Optional features (disabled by default)
-create_rds            = false
+# Optional features
+create_rds            = true
 create_frontend_cdn   = false
+
+# Per-service databases (one per backend service)
+rds_db_names = [
+  "auth_db",
+  "stock_db",
+  "whatsapp_db",
+  "ai_db",
+  "notification_db",
+  "file_storage_db",
+]
