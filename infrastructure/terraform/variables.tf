@@ -173,3 +173,9 @@ variable "frontend_bucket" {
 	default     = "ecommerce-ai-frontend-example"
 }
 
+variable "eks_admin_arns" {
+	description = "List of IAM Role ARNs to grant EKS cluster admin access (used for CI/CD, etc.)"
+	type        = list(string)
+	default     = []
+}
+

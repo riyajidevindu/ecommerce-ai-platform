@@ -29,3 +29,8 @@ rds_db_names = [
   "notification_db",
   "file_storage_db",
 ]
+
+# Grant CI/CD role admin access to EKS
+eks_admin_arns = [
+  "arn:aws:iam::398128644108:role/GitHubActionsRole-ecommerce-ai-platform"
+]

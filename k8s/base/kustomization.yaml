@@ -21,7 +21,7 @@ resources:
   - notification-service.yaml
   - file-storage-service.yaml
 
-  # DB initialization job to create per-service databases in RDS
-  - ../tools/init-db-job.yaml
+  # DB initialization job to create per-service databases in RDS (must reside under base/ for kustomize security)
+  - jobs/init-db-job.yaml
 
 
