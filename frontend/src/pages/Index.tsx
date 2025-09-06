@@ -1,7 +1,7 @@
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/useAuth';
 import { motion } from 'framer-motion';
 import { MessageSquare, Zap, ShoppingCart } from 'lucide-react';
 import { ChatPreview } from '@/components/common/ChatPreview';

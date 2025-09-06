@@ -56,7 +56,9 @@ apiClient.interceptors.response.use(
         try {
           // Best-effort: keep token across reloads if context isn't yet mounted
           sessionStorage.setItem('access_token', access_token);
-        } catch {}
+        } catch {
+          // ignore storage access issues (e.g., private mode)
+        }
         originalRequest.headers.Authorization = `Bearer ${access_token}`;
         return apiClient(originalRequest);
       } catch (refreshError) {
@@ -142,6 +144,27 @@ export const getCurrentUser = async (): Promise<UserResponse> => {
     return response.data;
   } catch (error) {
     console.error('Error getting current user:', error);
+    throw error;
+  }
+};
+
+export const updateCurrentUser = async (
+  data: { 
+    username?: string; 
+    email?: string; 
+    current_password?: string; 
+    new_password?: string 
+  }): Promise<UserResponse> => {
+  try {
+    const response = await apiClient.patch<UserResponse>('/api/v1/users/me', data);
+    return response.data;
+  } catch (error) {
+    // If method not allowed (405) fallback to PUT (some proxies may block PATCH)
+    if (error?.response?.status === 405) {
+      const resp2 = await apiClient.put<UserResponse>('/api/v1/users/me', data);
+      return resp2.data;
+    }
+    console.error('Error updating current user:', error);
     throw error;
   }
 };

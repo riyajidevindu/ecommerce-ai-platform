@@ -60,9 +60,9 @@ export default function CommandMenu() {
             className="hidden md:inline-flex gap-2"
             onClick={() => setOpen(true)}
           >
-            <Search className="h-4 w-4" />
-            <span className="hidden lg:inline">Search</span>
-            <span className="ml-1 text-xs text-muted-foreground border rounded px-1">
+            <Search className="h-4 w-4" style={{ color: "hsl(var(--foreground))" }} />
+            <span className="hidden lg:inline" style={{ color: "hsl(var(--foreground))" }}>Search</span>
+            <span className="ml-1 text-xs text-muted-foreground border rounded px-1" style={{ color: "hsl(var(--foreground))" }}>
               {isMac ? "⌘K" : "Ctrl K"}
             </span>
           </Button>
