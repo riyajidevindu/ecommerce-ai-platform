@@ -238,20 +238,37 @@ resource "aws_security_group" "rds" {
 	tags = var.tags
 }
 
-# Grant current IAM user admin access to the cluster
+data "aws_caller_identity" "current" {}
+
+# Grant current IAM user admin access for local kubectl
 resource "aws_eks_access_entry" "admin_user" {
-  cluster_name  = module.eks.cluster_name
-  principal_arn = data.aws_caller_identity.current.arn
+	cluster_name  = module.eks.cluster_name
+	principal_arn = data.aws_caller_identity.current.arn
 }
 
 resource "aws_eks_access_policy_association" "admin_user_policy" {
-  cluster_name  = module.eks.cluster_name
-  principal_arn = data.aws_caller_identity.current.arn
-  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-  access_scope {
-    type = "cluster"
-  }
+	cluster_name  = module.eks.cluster_name
+	principal_arn = data.aws_caller_identity.current.arn
+	policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+	access_scope {
+		type = "cluster"
+	}
 }
 
-data "aws_caller_identity" "current" {}
+# Grant admin access to any additional IAM roles (e.g., GitHub Actions OIDC role)
+resource "aws_eks_access_entry" "admin_roles" {
+	for_each      = toset(var.eks_admin_arns)
+	cluster_name  = module.eks.cluster_name
+	principal_arn = each.value
+}
+
+resource "aws_eks_access_policy_association" "admin_roles_policy" {
+	for_each      = toset(var.eks_admin_arns)
+	cluster_name  = module.eks.cluster_name
+	principal_arn = each.value
+	policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+	access_scope {
+		type = "cluster"
+	}
+}
 
