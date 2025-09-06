@@ -48,3 +48,28 @@ def publish_user_created(user_data: dict):
         channel = None  # Reset channel on connection error
     except Exception as e:
         logger.error(f"An error occurred while publishing message: {e}", exc_info=True)
+
+
+def publish_user_updated(user_data: dict):
+    """Publishes a message when user profile is updated."""
+    try:
+        ch = get_rabbitmq_channel()
+        exchange_name = 'user_fanout_events'
+        ch.exchange_declare(exchange=exchange_name, exchange_type='fanout', durable=True)
+        message = {
+            "event_type": "user_updated",
+            "user": user_data
+        }
+        ch.basic_publish(
+            exchange=exchange_name,
+            routing_key='',
+            body=json.dumps(message),
+            properties=pika.BasicProperties(delivery_mode=2)
+        )
+        logger.info(f" [x] Sent user_updated event for user: {user_data.get('username')}")
+    except pika.exceptions.AMQPConnectionError as e:
+        logger.error(f"Failed to connect to RabbitMQ: {e}")
+        global channel
+        channel = None
+    except Exception as e:
+        logger.error(f"An error occurred while publishing message: {e}", exc_info=True)

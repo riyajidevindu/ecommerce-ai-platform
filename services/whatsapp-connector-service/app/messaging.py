@@ -97,15 +97,42 @@ def _handle_user_created(data: dict):
         if not existing_user:
             user = UserCreate(id=user_data["id"], name=user_data["username"])
             user_crud.create_user(db, user=user)
-            logger.info(f"User {user_data['username']} created in whatsapp-connector-service.")
+            logger.info(f"[user_created] user {user_data['id']} created in whatsapp-connector-service name={user_data['username']}")
         else:
-            logger.info(f"User {user_data['username']} already exists in whatsapp-connector-service.")
+            logger.info(f"[user_created] user {user_data['id']} already exists in whatsapp-connector-service")
+    finally:
+        db.close()
+
+def _handle_user_updated(data: dict):
+    user_data = data.get("user")
+    if not user_data:
+        logger.warning("No user data in user_updated event")
+        return
+    from app.db.session import SessionLocal
+    from app.crud import user as user_crud
+    db = SessionLocal()
+    try:
+        logger.info(f"[user_updated] raw user payload: {user_data}")
+        existing = user_crud.get_user(db, user_id=user_data["id"])
+        if existing:
+            if "username" in user_data and user_data["username"] and getattr(existing, "name", None) != user_data["username"]:
+                existing.name = user_data["username"]
+                db.commit()
+                db.refresh(existing)
+                logger.info(f"[user_updated] user {user_data['id']} updated name={existing.name}")
+        else:
+            # Backfill create
+            from app.schemas.user import UserCreate
+            u = UserCreate(id=user_data["id"], name=user_data.get("username", "unknown"))
+            user_crud.create_user(db, user=u)
+            logger.info(f"[user_updated] user {user_data['id']} backfilled on update in whatsapp-connector-service")
     finally:
         db.close()
 
 EVENT_HANDLERS = {
     "ai_response_ready": _handle_ai_response_ready,
     "user_created": _handle_user_created,
+    "user_updated": _handle_user_updated,
 }
 
 def on_message_callback(ch, method, properties, body):

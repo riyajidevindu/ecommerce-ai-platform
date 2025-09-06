@@ -5,12 +5,12 @@ metadata:
   namespace: ecommerce
 data:
   init-db.sql: |-
-    -- Ensure role exists with desired password
+    -- Ensure role exists with desired password (APP_DB_PASSWORD)
     DO $$ BEGIN
       IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'user') THEN
-        CREATE ROLE "user" WITH LOGIN PASSWORD 'password';
+        CREATE ROLE "user" WITH LOGIN PASSWORD '${APP_DB_PASSWORD}';
       ELSE
-        ALTER ROLE "user" WITH PASSWORD 'password';
+        ALTER ROLE "user" WITH PASSWORD '${APP_DB_PASSWORD}';
       END IF;
     END $$;
 
@@ -19,6 +19,8 @@ data:
     SELECT 'CREATE DATABASE stock_db OWNER "user"' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'stock_db')\gexec
     SELECT 'CREATE DATABASE whatsapp_db OWNER "user"' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'whatsapp_db')\gexec
     SELECT 'CREATE DATABASE ai_db OWNER "user"' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'ai_db')\gexec
+    SELECT 'CREATE DATABASE notification_db OWNER "user"' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'notification_db')\gexec
+    SELECT 'CREATE DATABASE file_storage_db OWNER "user"' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'file_storage_db')\gexec
 ---
 apiVersion: batch/v1
 kind: Job
@@ -33,13 +35,35 @@ spec:
       containers:
         - name: psql
           image: docker.io/bitnami/postgresql:17.6.0-debian-12-r0
-          command: ["/bin/bash","-lc","/opt/bitnami/postgresql/bin/psql -h postgres -U postgres -f /scripts/init-db.sql"]
+          command:
+            - /bin/bash
+            - -lc
+            - |
+              envsubst < /scripts/init-db.sql > /scripts/init-db.rendered.sql
+              psql -h "${RDS_ENDPOINT}" -p "${RDS_PORT:-5432}" -U "${RDS_MASTER_USERNAME}" -f /scripts/init-db.rendered.sql
           env:
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: postgres-postgresql
-                  key: postgres-password
+                  name: platform-secrets
+                  key: RDS_MASTER_PASSWORD
+            - name: APP_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: APP_DB_PASSWORD
+            - name: RDS_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: RDS_ENDPOINT
+            - name: RDS_MASTER_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: RDS_MASTER_USERNAME
+            - name: RDS_PORT
+              value: "5432"
           volumeMounts:
             - name: sql
               mountPath: /scripts

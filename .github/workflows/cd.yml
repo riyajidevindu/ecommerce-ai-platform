@@ -117,6 +117,10 @@ jobs:
           WHATSAPP_VERIFY_TOKEN: ${{ secrets.WHATSAPP_VERIFY_TOKEN }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          RDS_ENDPOINT: ${{ secrets.RDS_ENDPOINT }}
+          RDS_MASTER_USERNAME: ${{ secrets.RDS_MASTER_USERNAME }}
+          RDS_MASTER_PASSWORD: ${{ secrets.RDS_MASTER_PASSWORD }}
+          APP_DB_PASSWORD: ${{ secrets.APP_DB_PASSWORD }}
         run: |
           set -e
           cat > k8s/overlays/prod/secrets.env << EOF
@@ -136,6 +140,10 @@ jobs:
           whatsapp_verify_token=${WHATSAPP_VERIFY_TOKEN}
           google_client_id=${GOOGLE_CLIENT_ID}
           google_client_secret=${GOOGLE_CLIENT_SECRET}
+          RDS_ENDPOINT=${RDS_ENDPOINT}
+          RDS_MASTER_USERNAME=${RDS_MASTER_USERNAME}
+          RDS_MASTER_PASSWORD=${RDS_MASTER_PASSWORD}
+          APP_DB_PASSWORD=${APP_DB_PASSWORD}
           EOF
           kubectl apply -k k8s/overlays/prod
 

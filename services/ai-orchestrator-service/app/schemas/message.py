@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 class MessageBase(BaseModel):
     user_message: str
@@ -13,8 +13,8 @@ class Message(MessageBase):
         orm_mode = True
 
 class Conversation(BaseModel):
-    whatsapp_no: str
-    first_message: str
+    whatsapp_no: Optional[str] = None
+    first_message: Optional[str] = None
     messages: List[Message]
 
     class Config:

@@ -12,6 +12,7 @@ resources:
   - traefik-ingress-http.yaml
   # Use a single ingress with full prefixed paths; disable per-service ingresses and strip middlewares to avoid route conflicts
   - postgres-headless-alias.yaml
+  - rabbitmq-secret.yaml
   - rabbitmq.yaml
   - auth-service.yaml
   - stock-service.yaml
@@ -19,5 +20,8 @@ resources:
   - ai-orchestrator-service.yaml
   - notification-service.yaml
   - file-storage-service.yaml
+
+  # DB initialization job to create per-service databases in RDS
+  - ../tools/init-db-job.yaml
 
 

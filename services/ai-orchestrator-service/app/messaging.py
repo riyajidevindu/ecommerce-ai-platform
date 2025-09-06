@@ -60,6 +60,29 @@ def _handle_user_created(data: dict):
     finally:
         db.close()
 
+def _handle_user_updated(data: dict):
+    user_data = data.get("user")
+    if not user_data:
+        logger.warning("No user data in user_updated event")
+        return
+    db: Session = SessionLocal()
+    try:
+        existing_user = user_crud.get_user(db, user_id=user_data["id"])
+        if existing_user:
+            # Only 'name' field is stored locally representing username
+            if "username" in user_data and user_data["username"] and existing_user.name != user_data["username"]:
+                existing_user.name = user_data["username"]
+                db.commit()
+                db.refresh(existing_user)
+                logger.info(f"User {user_data['username']} updated in ai-orchestrator-service.")
+        else:
+            # Backfill create if missed
+            user = UserCreate(id=user_data["id"], name=user_data.get("username", "unknown"))
+            user_crud.create_user(db, user=user)
+            logger.info(f"User {user_data['username']} backfilled during update event in ai-orchestrator-service.")
+    finally:
+        db.close()
+
 def _handle_product_created(data: dict):
     product_data = data.get("product")
     if not product_data:
@@ -145,22 +168,45 @@ def _handle_new_message(channel, data: dict):
         from .schemas.customer import CustomerCreate
         from .schemas.message import MessageBase
 
+    # Extract the tenant/user id once and pass it through.
+        user_id = message_data["user_id"]
+
         customer = customer_crud.get_customer(db, customer_id=message_data["customer_id"])
         if not customer:
             customer = customer_crud.create_customer(db, customer=CustomerCreate(
-                user_id=message_data["user_id"]
+                user_id=user_id,
+                whatsapp_no=message_data.get("whatsapp_no")
             ), customer_id=message_data["customer_id"])
+        else:
+            # Backfill whatsapp_no if missing or different
+            try:
+                incoming_no = message_data.get("whatsapp_no")
+                if incoming_no and getattr(customer, "whatsapp_no", None) != incoming_no:
+                    customer.whatsapp_no = incoming_no
+                    db.commit()
+                    db.refresh(customer)
+            except Exception:
+                pass
 
         message = message_crud.create_message(db, message=MessageBase(
             user_message=message_data["user_message"]
         ), customer_id=customer.id, message_id=message_data["id"])
 
-        message_processor.process_message(channel, message, db)
+        # Best-effort: cache the customer's whatsapp number if provided by the producer
+        try:
+            from .phone_cache import set_whatsapp_no
+            set_whatsapp_no(customer.id, message_data.get("whatsapp_no"))
+        except Exception:
+            pass
+
+        # Ensure the message is processed within the correct user scope
+        message_processor.process_message(channel, message, db, user_id=user_id)
     finally:
         db.close()
 
 EVENT_HANDLERS = {
     "user_created": _handle_user_created,
+    "user_updated": _handle_user_updated,
     "product_created": _handle_product_created,
     "product_updated": _handle_product_updated,
     "product_deleted": _handle_product_deleted,

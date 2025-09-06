@@ -9,7 +9,7 @@ const AppLayout = () => {
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         <div className="flex-1 flex flex-col">
-          <header className="flex items-center h-14 border-b">
+          <header className="flex items-center h-14">
             <SidebarTrigger className="ml-2 mr-2 text-foreground" />
             <div className="w-full">
               <Navbar />

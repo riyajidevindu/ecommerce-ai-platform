@@ -53,6 +53,12 @@ apiClient.interceptors.response.use(
         const response = await apiClient.post<{ access_token: string }>(refreshPath);
         const { access_token } = response.data;
         setAuthToken(access_token);
+        try {
+          // Best-effort: keep token across reloads if context isn't yet mounted
+          sessionStorage.setItem('access_token', access_token);
+        } catch {
+          // ignore storage access issues (e.g., private mode)
+        }
         originalRequest.headers.Authorization = `Bearer ${access_token}`;
         return apiClient(originalRequest);
       } catch (refreshError) {
@@ -142,6 +148,27 @@ export const getCurrentUser = async (): Promise<UserResponse> => {
   }
 };
 
+export const updateCurrentUser = async (
+  data: { 
+    username?: string; 
+    email?: string; 
+    current_password?: string; 
+    new_password?: string 
+  }): Promise<UserResponse> => {
+  try {
+    const response = await apiClient.patch<UserResponse>('/api/v1/users/me', data);
+    return response.data;
+  } catch (error) {
+    // If method not allowed (405) fallback to PUT (some proxies may block PATCH)
+    if (error?.response?.status === 405) {
+      const resp2 = await apiClient.put<UserResponse>('/api/v1/users/me', data);
+      return resp2.data;
+    }
+    console.error('Error updating current user:', error);
+    throw error;
+  }
+};
+
 export const logout = async () => {
   try {
     const response = await apiClient.post('/api/v1/auth/logout');
@@ -162,6 +189,7 @@ export interface Product {
   available_qty?: number;
   image: string;
   sku: string;
+  owner_id?: number; // added for client-side filtering/safety
 }
 
 export const getProducts = async (): Promise<Product[]> => {
@@ -233,14 +261,16 @@ export interface Message {
 }
 
 export interface Conversation {
-  whatsapp_no: string;
-  first_message: string;
+  whatsapp_no?: string | null;
+  first_message?: string | null;
   messages: Message[];
 }
 
-export const getConversations = async (): Promise<Conversation[]> => {
+export const getConversations = async (userId?: number): Promise<Conversation[]> => {
   try {
-    const response = await apiClient.get<Conversation[]>('/api/v1/ai/conversations');
+    const response = await apiClient.get<Conversation[]>('/api/v1/ai/conversations', {
+      params: userId ? { user_id: userId } : {},
+    });
     return response.data;
   } catch (error) {
     console.error('Error fetching conversations:', error);
@@ -250,8 +280,9 @@ export const getConversations = async (): Promise<Conversation[]> => {
 
 // WhatsApp Service
 export interface WhatsAppUser {
-  user_id: number;
-  whatsapp_no: string;
+  id: number;
+  whatsapp_no?: string | null;
+  phone_number_id?: string | null;
 }
 
 export const getWhatsAppUser = async (userId: number): Promise<WhatsAppUser> => {
@@ -264,12 +295,53 @@ export const getWhatsAppUser = async (userId: number): Promise<WhatsAppUser> => 
   }
 };
 
-export const createOrUpdateWhatsAppUser = async (userId: number, whatsappNo: string): Promise<WhatsAppUser> => {
+export const createOrUpdateWhatsAppUser = async (
+  userId: number,
+  data: { whatsapp_no?: string; phone_number_id?: string }
+): Promise<WhatsAppUser> => {
   try {
-    const response = await apiClient.post<WhatsAppUser>(`/api/v1/whatsapp/user/${userId}`, { whatsapp_no: whatsappNo });
+    const response = await apiClient.post<WhatsAppUser>(`/api/v1/whatsapp/user/${userId}`, data);
     return response.data;
   } catch (error) {
     console.error('Error creating/updating WhatsApp user:', error);
+    throw error;
+  }
+};
+
+export const getConnectedNumbers = async (userId: number): Promise<string[]> => {
+  try {
+    const response = await apiClient.get<string[]>(`/api/v1/whatsapp/user/${userId}/connected-numbers`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching connected numbers:', error);
+    throw error;
+  }
+};
+
+export interface MessageStatsRow {
+  whatsapp_no: string;
+  total: number;
+  ai: number;
+  customer: number;
+}
+
+export const getMessageStats = async (userId: number): Promise<MessageStatsRow[]> => {
+  try {
+    const response = await apiClient.get<MessageStatsRow[]>(`/api/v1/whatsapp/user/${userId}/message-stats`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching message stats:', error);
+    throw error;
+  }
+};
+
+// Customers (WhatsApp service)
+export const getCustomersCount = async (userId: number): Promise<number> => {
+  try {
+    const response = await apiClient.get<{ count: number }>(`/api/v1/whatsapp/users/${userId}/customers/count`);
+    return response.data.count;
+  } catch (error) {
+    console.error('Error fetching customers count:', error);
     throw error;
   }
 };

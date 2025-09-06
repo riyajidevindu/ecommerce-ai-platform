@@ -5,12 +5,10 @@ from app.crud import customer as customer_crud
 from app.crud import message as message_crud
 from app.crud import user as user_crud
 from app.crud import whatsapp as whatsapp_crud
-from app.schemas import user as user_schema
-from app.schemas.customer import CustomerCreate
+from app.schemas.customer import CustomerCreate, Customer as CustomerSchema
 from app.schemas.message import MessageCreate
 from app.schemas.whatsapp import WhatsAppUser, WhatsAppUserCreate
 from app import messaging
-import requests
 from app.config import WHATSAPP_VERIFY_TOKEN
 from fastapi.responses import PlainTextResponse
 
@@ -26,6 +24,15 @@ def get_whatsapp_user(user_id: int, db: Session = Depends(get_db)):
 @router.post("/user/{user_id}", response_model=WhatsAppUser)
 def create_or_update_whatsapp_user(user_id: int, whatsapp_user: WhatsAppUserCreate, db: Session = Depends(get_db)):
     return whatsapp_crud.create_or_update_whatsapp_user(db=db, user_id=user_id, whatsapp_user=whatsapp_user)
+
+@router.get("/user/{user_id}/connected-numbers", response_model=list[str])
+def list_connected_numbers(user_id: int, db: Session = Depends(get_db)):
+    numbers = customer_crud.get_connected_numbers_for_user(db, user_id=user_id)
+    return numbers
+
+@router.get("/user/{user_id}/message-stats")
+def list_message_stats(user_id: int, db: Session = Depends(get_db)):
+    return message_crud.get_message_stats_for_user(db, user_id=user_id)
 
 @router.get("/webhook")
 async def whatsapp_webhook_verify(request: Request):
@@ -93,10 +100,13 @@ async def whatsapp_webhook(request: Request, db: Session = Depends(get_db)):
         # If metadata.phone_number_id was provided, your data model should map it to user
         raise HTTPException(status_code=404, detail="User not found for receiver number")
 
-    # Get or create the customer by sender's number
-    customer = customer_crud.get_customer_by_whatsapp_no(db, whatsapp_no=sender_number)
+    # Get or create the customer by sender's number, scoped to this user
+    customer = customer_crud.get_customer_by_whatsapp_no_for_user(db, user_id=matched_user.id, whatsapp_no=sender_number)
     if not customer:
-        customer = customer_crud.create_customer(db, customer=CustomerCreate(whatsapp_no=sender_number, user_id=matched_user.id))
+        customer = customer_crud.create_customer(
+            db,
+            customer=CustomerCreate(whatsapp_no=sender_number, user_id=matched_user.id),
+        )
 
     # Persist inbound message
     message = message_crud.create_message(db, message=MessageCreate(customer_id=customer.id, message=user_message))
@@ -117,3 +127,14 @@ async def whatsapp_webhook(request: Request, db: Session = Depends(get_db)):
 @router.post("/webhook/")
 async def whatsapp_webhook_slash(request: Request, db: Session = Depends(get_db)):
     return await whatsapp_webhook(request, db)
+
+@router.get("/users/{user_id}/customers/count")
+def get_user_customers_count(user_id: int, db: Session = Depends(get_db)):
+    """Return number of customers belonging to a specific user."""
+    total = customer_crud.count_customers_by_user(db, user_id=user_id)
+    return {"count": total}
+
+@router.get("/users/{user_id}/customers", response_model=list[CustomerSchema])
+def list_user_customers(user_id: int, db: Session = Depends(get_db)):
+    """Return the list of customers for a specific user."""
+    return customer_crud.list_customers_by_user(db, user_id=user_id)

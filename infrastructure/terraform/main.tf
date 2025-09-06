@@ -9,6 +9,10 @@ terraform {
 			source  = "hashicorp/kubernetes"
 			version = ">= 2.23"
 		}
+		postgresql = {
+			source = "cyrilgdn/postgresql"
+			version = ">= 1.20"
+		}
 	}
 }
 
@@ -21,6 +25,16 @@ provider "aws" {
 	alias  = "us_east_1"
 	region = "us-east-1"
 }
+
+# Remove direct DB management via Terraform to avoid connectivity issues from outside VPC
+# provider "postgresql" {
+#   host     = var.create_rds ? aws_db_instance.postgres[0].address : "127.0.0.1"
+#   port     = var.create_rds ? aws_db_instance.postgres[0].port    : 5432
+#   database = var.create_rds ? var.rds_db_names[0]                  : "postgres"
+#   username = var.create_rds ? var.rds_username                     : "postgres"
+#   password = var.create_rds ? local.rds_password_value             : ""
+#   sslmode  = var.create_rds ? "require"                            : "disable"
+# }
 
 # Optionally configure remote state manually in a backend {} block here.
 
@@ -112,14 +126,14 @@ resource "aws_db_instance" "postgres" {
 	count                     = var.create_rds ? 1 : 0
 	identifier                = "${var.name}-postgres"
 	engine                    = "postgres"
-	engine_version            = var.rds_engine_version
+	engine_version            = var.rds_engine_version != "" ? var.rds_engine_version : null
 	instance_class            = var.rds_instance_class
 	allocated_storage         = var.rds_allocated_storage
 	db_subnet_group_name      = aws_db_subnet_group.this[0].name
-	vpc_security_group_ids    = [module.vpc.default_security_group_id]
+	vpc_security_group_ids    = [aws_security_group.rds[0].id]
 	username                  = var.rds_username
 	password                  = local.rds_password_value
-	db_name                   = var.rds_db_name
+	db_name                   = var.rds_db_names[0] # Create the first DB with the instance
 	skip_final_snapshot       = true
 	publicly_accessible       = false
 	deletion_protection       = false
@@ -128,6 +142,14 @@ resource "aws_db_instance" "postgres" {
 	multi_az                  = false
 	tags                      = var.tags
 }
+
+# Create the rest of the databases
+# resource "postgresql_database" "dbs" {
+# 	count      = var.create_rds ? length(var.rds_db_names) : 0
+# 	name       = var.rds_db_names[count.index]
+# 	owner      = var.rds_username
+# 	depends_on = [aws_db_instance.postgres]
+# }
 
 # ---------------------
 # Optional: S3 + CloudFront for Frontend
@@ -185,4 +207,51 @@ resource "aws_cloudfront_distribution" "cdn" {
 
 	tags = var.tags
 }
+
+# ---------------------
+# Security Group for RDS allowing EKS access
+# ---------------------
+resource "aws_security_group" "rds" {
+	count  = var.create_rds ? 1 : 0
+	name   = "${var.name}-rds-sg"
+	vpc_id = module.vpc.vpc_id
+
+	description = "Allow PostgreSQL from EKS node and cluster security groups"
+
+	# Ingress from EKS node SG
+	ingress {
+		from_port       = 5432
+		to_port         = 5432
+		protocol        = "tcp"
+		security_groups = [module.eks.node_security_group_id, module.eks.cluster_security_group_id]
+		description     = "PostgreSQL from EKS"
+	}
+
+	# Egress all
+	egress {
+		from_port   = 0
+		to_port     = 0
+		protocol    = "-1"
+		cidr_blocks = ["0.0.0.0/0"]
+	}
+
+	tags = var.tags
+}
+
+# Grant current IAM user admin access to the cluster
+resource "aws_eks_access_entry" "admin_user" {
+  cluster_name  = module.eks.cluster_name
+  principal_arn = data.aws_caller_identity.current.arn
+}
+
+resource "aws_eks_access_policy_association" "admin_user_policy" {
+  cluster_name  = module.eks.cluster_name
+  principal_arn = data.aws_caller_identity.current.arn
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  access_scope {
+    type = "cluster"
+  }
+}
+
+data "aws_caller_identity" "current" {}
 

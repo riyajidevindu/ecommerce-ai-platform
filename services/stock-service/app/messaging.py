@@ -59,15 +59,40 @@ def _handle_user_created(data: dict):
 
     db: Session = SessionLocal()
     try:
-        logger.info(f"Creating user in stock_db: {user_data}")
-        user_create = user_schema.UserCreate(**user_data)
+        logger.info(f"[user_created] raw user payload: {user_data}")
+        payload = {k: user_data.get(k) for k in ["id", "username", "email"] if k in user_data}
+        try:
+            user_create = user_schema.UserCreate(**payload)
+        except Exception as e:
+            logger.error(f"Validation error constructing UserCreate from {payload}: {e}")
+            return
         user_crud.create_user(db, user=user_create)
-        logger.info(f"User {user_data['username']} created in stock_db.")
+        logger.info(f"User {payload.get('username')} created in stock_db (id={payload.get('id')}).")
+    finally:
+        db.close()
+
+def _handle_user_updated(data: dict):
+    user_data = data.get("user")
+    if not user_data:
+        logger.warning("No user data in user_updated event")
+        return
+    db: Session = SessionLocal()
+    try:
+        logger.info(f"[user_updated] raw user payload: {user_data}")
+        existing = user_crud.update_user(
+            db,
+            user_id=user_data["id"],
+            username=user_data.get("username"),
+            email=user_data.get("email")
+        )
+        if existing:
+            logger.info(f"User {user_data['id']} updated/backfilled in stock_db (username={existing.username}, email={getattr(existing,'email',None)}).")
     finally:
         db.close()
 
 EVENT_HANDLERS = {
     "user_created": _handle_user_created,
+    "user_updated": _handle_user_updated,
 }
 
 def on_message_callback(ch, method, properties, body):
